@@ -10,7 +10,7 @@ export default class AdminFeedbacks extends React.Component {
     super();
     this.generateReport = this.generateReport.bind(this);
     this.state = {
-      feedbacks: [],
+      feedbacks: []
     };
   }
 
@@ -19,11 +19,8 @@ export default class AdminFeedbacks extends React.Component {
       .get("http://localhost:8070/admin/getcomments")
       .then((res) => {
         this.setState({ feedbacks: res.data.feedbacks });
-        console.log(res.data.feedbacks);
       })
-      .catch((err) => {
-        console.log(err.message);
-      });
+      .catch((err) => {});
   }
 
   async generateReport() {
@@ -31,21 +28,16 @@ export default class AdminFeedbacks extends React.Component {
     await axios
       .post("http://localhost:8070/generatefeedbackreport", obj, {
         responseType: "arraybuffer",
-        headers: { Accept: "application/pdf" },
+        headers: { Accept: "application/pdf" }
       })
       .then((res) => {
         alert("Report Generated");
-        console.log(res);
-        console.log(res.data);
         const pdfBlog = new Blob([res.data], { type: "application/pdf" });
         saveAs(pdfBlog, "Feedbacks.pdf");
 
         //window.open(res.data, '_blank');
       })
-      .catch((err) => {
-        console.log(err.message);
-      });
-    console.log(obj);
+      .catch((err) => {});
   }
 
   render() {

@@ -17,22 +17,22 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     "& > *": {
       margin: theme.spacing(1),
-      padding: 5,
+      padding: 5
     },
-    color: "#dd2c00",
-  },
+    color: "#dd2c00"
+  }
 }));
 
 const useUpdate = makeStyles((theme) => ({
   root: {
     // color: "#f4511e"
-  },
+  }
 }));
 
 const useDelete = makeStyles((theme) => ({
   root: {
     // color: "#dd2c00"
-  },
+  }
 }));
 
 const useForceUpdate = () => useState()[1];
@@ -45,7 +45,7 @@ const Feedback = ({
   studentName,
   studentPicture,
   rating,
-  comment,
+  comment
 }) => {
   const classes = useStyles();
   const deleteButton = useDelete();
@@ -57,10 +57,6 @@ const Feedback = ({
   let verify = null;
   if (token) {
     verify = jwt.verify(token, "jwtSecret");
-    console.log("key id", verify._id);
-    console.log("student id", studentId);
-    console.log("student name", studentName);
-    console.log(studentId === verify._id);
   } else {
     verify = null;
   }
@@ -74,8 +70,8 @@ const Feedback = ({
     const config = {
       headers: {
         Authorization: localStorage.getItem("Authorization"),
-        "content-type": "application/json",
-      },
+        "content-type": "application/json"
+      }
     };
 
     if (window.confirm("Are you sure you wish to delete this Feedback?")) {
@@ -113,7 +109,7 @@ const Feedback = ({
                 style={{
                   pointerEvents: "none",
                   fontWeight: "bold",
-                  paddingLeft: 10,
+                  paddingLeft: 10
                 }}
               >
                 {studentName}
@@ -123,7 +119,7 @@ const Feedback = ({
                 style={{
                   textAlign: "left",
                   pointerEvents: "none",
-                  paddingLeft: 10,
+                  paddingLeft: 10
                 }}
               >
                 <StarRating
@@ -138,9 +134,7 @@ const Feedback = ({
         </ul>
 
         <div style={{ fontSize: 15 }}>
-          <div style={{ paddingLeft: 105, display: "flex" }}>
-            {comment}
-          </div>
+          <div style={{ paddingLeft: 105, display: "flex" }}>{comment}</div>
 
           {verify === null || studentId !== verify._id ? (
             <div></div>
