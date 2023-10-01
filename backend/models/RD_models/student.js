@@ -7,41 +7,50 @@ const studentSchema = new mongoose.Schema({
 
     studentName :{
         type : String,
-        required : true
-    
+        required: [true, "Student Name is required!"],
+        maxlength: [50, "Student Name should be less than 50 characters!"],
+        trim: true,
       },
   
       email: {
         type: String,
-        required: true,
-        lowercase: true,
         trim: true,
-        validate(value) {
-          if (!validator.isEmail(value)) {
-            throw new Error("Please enter valid Email address");
-          }
+        maxlength: [100, "Email should be less than 100 characters!"],
+        validate: {
+          validator: (value) => {
+            return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+              value
+            );
+          },
+          message: "Invalid email address!",
         },
     },
 
-    pwd: {
-
+      pwd: {
       type: String,
-      required: true,
       trim: true,
+      minlength: [6, "Password should be more than 6 characters!"],
   },
 
-  
   NIC: {
     type: String,
-    required: true,
+    trim: true,
+    minlength: [6, "NIC should be more than 6 characters!"],
   },
 
-      phone: {
+  phone: {
         type: String,
-        required: true,
+        trim: true,
+        maxlength: [10, "Phone Number should be less than 10 characters!"],
+        validate: {
+          validator: (value) => {
+            return /^[0-9]{10}$/.test(value);
+          },
+          message: "Invalid phone number!",
+        },
       },
       
-      tokens: [
+  tokens: [
         {
         token: {
             type: String,
