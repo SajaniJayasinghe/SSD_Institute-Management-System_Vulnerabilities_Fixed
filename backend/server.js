@@ -46,7 +46,7 @@ const chartroutes = require("./routes/AA_routes/admin_dashboard.route");
 app.use("/course", courseRouter);
 app.use("/student", studentRouter);
 app.use("/admin", adminRouter);
-app.use("/usersremove",usersremoveRoutes);
+app.use("/usersremove", usersremoveRoutes);
 app.use("/feedbacks", feedbackRouter);
 app.use("/admin", chartroutes);
 app.use("/blog", postRouter);

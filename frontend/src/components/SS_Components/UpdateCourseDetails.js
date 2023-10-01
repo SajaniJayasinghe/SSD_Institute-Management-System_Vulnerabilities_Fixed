@@ -265,7 +265,6 @@ export default function UpdateCourseDetails() {
                         type="file"
                         class="form-control"
                         onChange={(e) => setcourse_thumbnail(e.target.files[0])}
-                        required
                       />
                     </div>
                     <br />

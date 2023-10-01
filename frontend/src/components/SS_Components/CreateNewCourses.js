@@ -10,6 +10,7 @@ import {
 import Button from "@material-ui/core/Button";
 import AdminNavBar from "../Layouts/AdminNavBar";
 import Footer from "../Layouts/footer";
+import DOMPurify from "dompurify";
 
 export default function CreateNewCourses() {
   const [course_name, setcourse_name] = useState("");
@@ -23,63 +24,74 @@ export default function CreateNewCourses() {
   const sendData = async (e) => {
     e.preventDefault();
 
+    //input validations
+    if (course_name.length < 1 || course_name.length > 50) {
+      alert("Course Name should be between 1 and 50 characters!");
+      return;
+    }
+    if (course_code.length < 1 || course_code.length > 6) {
+      alert("Course Code should be between 1 and 6 characters!");
+      return;
+    }
+    if (subtitle.length < 1 || subtitle.length > 50) {
+      alert("Subtitle should be between 1 and 50 characters!");
+      return;
+    }
+    if (lecture_name.length < 1 || lecture_name.length > 40) {
+      alert("Lecture Name should be between 1 and 40 characters!");
+      return;
+    }
+    if (description.length < 1 || description.length > 300) {
+      alert("Description should be between 1 and 300 characters!");
+      return;
+    }
+
     const fileName = new Date().getTime().toString() + course_thumbnail.name;
     const storage = getStorage(app);
     const storageRef = ref(storage, fileName);
     const uploadTask = uploadBytesResumable(storageRef, course_thumbnail);
 
-    // Register three observers:
-    // 1. 'state_changed' observer, called any time the state changes
-    // 2. Error observer, called on failure
-    // 3. Completion observer, called on successful completion
     uploadTask.on(
       "state_changed",
       (snapshot) => {
-        // Observe state change events such as progress, pause, and resume
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-        switch (snapshot.state) {
-          case "paused":
-            console.log("Upload is paused");
-            break;
-          case "running":
-            console.log("Upload is running");
-            break;
-        }
+        // ...
       },
       (error) => {
         // Handle unsuccessful uploads
+        console.error("Error uploading file:", error);
+        alert("Error uploading file. Please try again later.");
       },
       () => {
         // Handle successful uploads on complete
-        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-        getDownloadURL(uploadTask.snapshot.ref).then((course_thumbnail) => {
-          console.log("File available at", course_thumbnail);
+        getDownloadURL(uploadTask.snapshot.ref)
+          .then((course_thumbnail) => {
+            // Sanitize user inputs using DOMPurifier
+            //This is a critical step to prevent any potentially harmful HTML or scripts from being executed.
+            const sanitizedData = {
+              course_name: DOMPurify.sanitize(course_name),
+              course_code: DOMPurify.sanitize(course_code),
+              subtitle: DOMPurify.sanitize(subtitle),
+              lecture_name: DOMPurify.sanitize(lecture_name),
+              description: DOMPurify.sanitize(description),
+              courseadded_date: DOMPurify.sanitize(courseadded_date),
+              course_thumbnail: DOMPurify.sanitize(course_thumbnail),
+            };
 
-          let data = {
-            course_name: course_name,
-            course_code: course_code,
-            subtitle: subtitle,
-            lecture_name: lecture_name,
-            description: description,
-            courseadded_date: courseadded_date,
-            course_thumbnail: course_thumbnail,
-          };
-
-          axios
-            .post("http://localhost:8070/course/courseadd", data)
-            .then(() => {
-              alert("Course Added Successfully");
-              window.location.href = "/courseDetails";
-
-              console.log(data);
-            })
-            .catch((err) => {
-              alert(err);
-            });
-        });
+            axios
+              .post("http://localhost:8070/course/courseadd", sanitizedData)
+              .then(() => {
+                alert("Course Added Successfully");
+                window.location.href = "/courseDetails";
+              })
+              .catch((err) => {
+                console.error("Error adding course:", err);
+                alert("Error adding course");
+              });
+          })
+          .catch((err) => {
+            console.error("Error getting download URL:", err);
+            alert("Error getting download URL");
+          });
       }
     );
   };
@@ -127,6 +139,8 @@ export default function CreateNewCourses() {
                       <div style={{ minWidth: "165px", maxWidth: "100px" }}>
                         1. Course Name
                       </div>
+                      {/* React Rendering */}
+                      {/* React automatically escapes values rendered in JSX, which helps prevent XSS vulnerabilities */}
                       <input
                         type="text"
                         class="form-control"

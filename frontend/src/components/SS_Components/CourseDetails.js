@@ -16,12 +16,14 @@ export default class CourseDetails extends Component {
     this.generateReport = this.generateReport.bind(this);
     this.state = {
       courses: [],
+      searchKey: "", // Add a state variable for search
     };
   }
 
   componentDidMount() {
     this.retrieveCourses();
   }
+
   retrieveCourses() {
     axios.get("http://localhost:8070/course/getDetails").then((res) => {
       if (res.data.success) {
@@ -33,7 +35,7 @@ export default class CourseDetails extends Component {
     });
   }
 
-  //delete course details
+  // delete course details
   onDelete = (courseID) => {
     if (window.confirm("Are you sure you wish to delete this course?")) {
       axios
@@ -44,26 +46,13 @@ export default class CourseDetails extends Component {
     }
   };
 
-  //Search
-  filterData(courses, searchKey) {
-    const result = courses.filter(
-      (courses) =>
-        courses.course_name.toLowerCase().includes(searchKey)
-    );
-
-    this.setState({ courses: result });
-  }
-
+  // Search
   handleSearchArea = (e) => {
-    const searchKey = e.currentTarget.value;
-    axios.get("http://localhost:8070/course/getDetails").then((res) => {
-      if (res.data.success) {
-        this.filterData(res.data.existingCourses, searchKey);
-      }
-    });
+    const searchKey = e.currentTarget.value.toLowerCase();
+    this.setState({ searchKey }); // Update the searchKey state
   };
 
-  //generate report
+  // Generate report
   async generateReport() {
     const obj = { courses: this.state.courses };
     await axios
@@ -85,9 +74,13 @@ export default class CourseDetails extends Component {
   }
 
   render() {
+    const { courses, searchKey } = this.state;
+    const filteredCourses = courses.filter((course) =>
+      course.course_name.toLowerCase().includes(searchKey)
+    );
+
     return (
       <div>
-        {" "}
         <AdminNavBar />
         <div className="container">
           <br />
@@ -98,7 +91,7 @@ export default class CourseDetails extends Component {
                 <b>COURSES LIST</b>
               </u>
             </h3>{" "}
-            <br></br>
+            <br />
             <div align="right">
               <Button
                 variant="contained"
@@ -123,12 +116,12 @@ export default class CourseDetails extends Component {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Search Course Name "
+                placeholder="Search Course Name"
                 onChange={this.handleSearchArea}
               />{" "}
               <br />
             </div>
-            <table class="table">
+            <table className="table">
               <thead>
                 <tr bgcolor="#083C53">
                   <th>
@@ -147,7 +140,7 @@ export default class CourseDetails extends Component {
                     <font color="#fff">Lecture Name</font>
                   </th>
                   <th>
-                    <font color="#fff">Courseadded Date</font>
+                    <font color="#fff">Course Added Date</font>
                   </th>
                   <th>
                     <font color="#fff">Add Document</font>
@@ -159,22 +152,22 @@ export default class CourseDetails extends Component {
               </thead>
 
               <tbody>
-                {this.state.courses.map((courses, index) => (
-                  <tr>
+                {filteredCourses.map((course, index) => (
+                  <tr key={course._id}>
                     <th scope="row">{index + 1}</th>
-                    <td>{courses.course_name}</td>
-                    <td>{courses.course_code}</td>
-                    <td>{courses.subtitle}</td>
-                    <td>{courses.lecture_name}</td>
+                    <td>{course.course_name}</td>
+                    <td>{course.course_code}</td>
+                    <td>{course.subtitle}</td>
+                    <td>{course.lecture_name}</td>
                     <td>
-                      {moment(courses.courseadded_date).format("DD/MM/YYYY")}
+                      {moment(course.courseadded_date).format("DD/MM/YYYY")}
                     </td>
                     <td>
                       <IconButton
-                        aria-label="edit"
+                        aria-label="add-document"
                         color="primary"
                         size="small"
-                        href={`/addDocument/${courses._id}`}
+                        href={`/addDocument/${course._id}`}
                         style={{ color: "black", marginLeft: "50px" }}
                       >
                         <ControlPointIcon
@@ -188,15 +181,18 @@ export default class CourseDetails extends Component {
                         aria-label="edit"
                         color="primary"
                         size="small"
-                        href={`/update/${courses._id}`}
+                        href={`/update/${course._id}`}
                       >
                         <EditIcon fontSize="small" style={{ color: "black" }} />
                       </IconButton>{" "}
                       &nbsp;&nbsp;
-                      <IconButton aria-label="delete" size="small">
+                      <IconButton
+                        aria-label="delete"
+                        size="small"
+                        onClick={() => this.onDelete(course._id)}
+                      >
                         <DeleteForeverIcon
                           fontSize="small"
-                          onClick={() => this.onDelete(courses._id)}
                           style={{ color: "black" }}
                         />
                       </IconButton>
