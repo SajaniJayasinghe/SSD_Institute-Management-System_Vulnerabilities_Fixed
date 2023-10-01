@@ -4,6 +4,7 @@ import StarRating from "stars-rating";
 import axios from "axios";
 import Snackbar from "@material-ui/core/Snackbar";
 import ChatIcon from "@material-ui/icons/Chat";
+import DOMPurify from "dompurify";
 // import Ratings from "./ratings.component";
 
 const CreateFeedback = (courseID) => {
@@ -31,9 +32,21 @@ const CreateFeedback = (courseID) => {
       return;
     }
 
+    if (comment.length > 100) {
+      alert("Comment cannot exceed 100 characters.");
+      return;
+    }
+
+    const sanitizedComment = DOMPurify.sanitize(comment); // Sanitize user input
+
+    // Check if sanitized comment is different from original comment
+    if (sanitizedComment !== comment) {
+      alert("Please enter a valid comment.");
+      return;
+    }
     const feedback = {
       rating: rating,
-      comment: comment
+      comment: sanitizedComment
     };
 
     const config = {

@@ -6,6 +6,7 @@ import Ratings from "./ratings.component";
 import FadeIn from "react-fade-in";
 import "../AA_Components/product-page.css";
 import CircularProgress from "@material-ui/core/CircularProgress";
+import DOMPurify from "dompurify";
 
 const Feedbacks = (courseID) => {
   const [loading, setLoading] = useState(true);
@@ -33,12 +34,20 @@ const Feedbacks = (courseID) => {
     fetchFeedbacks();
   }, []);
 
+  const sanitizeInput = (input) => {
+    return DOMPurify.sanitize(input);
+  };
+
   useEffect(() => {
     setFilterComments(
       feedback.filter(
         (feedback) =>
-          feedback.comment.toLowerCase().includes(search.toLowerCase()) ||
-          feedback.studentName.toLowerCase().includes(search.toLowerCase())
+          sanitizeInput(feedback.comment)
+            .toLowerCase()
+            .includes(sanitizeInput(search).toLowerCase()) ||
+          sanitizeInput(feedback.studentName)
+            .toLowerCase()
+            .includes(sanitizeInput(search).toLowerCase())
       )
     );
   }, [search, feedback]);

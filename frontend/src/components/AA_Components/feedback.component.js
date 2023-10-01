@@ -10,8 +10,6 @@ import IconButton from "@material-ui/core/IconButton";
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import UpdateFeedback from "./UpdateFeedback";
-// import { JSDOM } from "jsdom";
-// import dompurify from "dompurify";
 
 // @ material ui styles
 const useStyles = makeStyles((theme) => ({
@@ -56,28 +54,6 @@ const Feedback = ({
   const [open, setOpen] = useState(false);
   const [onHide, setOnHide] = useState(true);
   const forceUpdate = useForceUpdate();
-  // let verify = null;
-  // if (token) {
-  //   verify = jwt.verify(token, "jwtSecret");
-  // } else {
-  //   verify = null;
-  // }
-  // console.log(verify);
-
-  // const sanitizeComment = (unsafeComment) => {
-  //   const { window } = new JSDOM("");
-  //   const DOMPurify = require("dompurify")(window);
-
-  //   return DOMPurify.sanitize(unsafeComment);
-  // };
-
-  // const sanitizedComment = sanitizeComment(comment);
-
-  // const isVulnerableInput = sanitizedComment !== comment;
-
-  // const showVulnerabilityAlert = () => {
-  //   alert("Please enter a valid comment.");
-  // };
 
   const updateComment = () => {
     setOpen(true);
@@ -150,30 +126,9 @@ const Feedback = ({
             </li>
           </label>
         </ul>
+
         <div style={{ fontSize: 15 }}>
           <div style={{ paddingLeft: 105, display: "flex" }}>{comment}</div>
-          {/* <div style={{ fontSize: 15 }}>
-          <div style={{ paddingLeft: 105, display: "flex" }}>
-            <ShowMoreText
-              lines={3}
-              more="Show more"
-              less="Show less"
-              anchorClass=""
-            >
-              <div
-                dangerouslySetInnerHTML={{ __html: sanitizedComment }}
-                onClick={() => {
-                  if (isVulnerableInput) {
-                    showVulnerabilityAlert();
-                  }
-                }}
-              />
-            </ShowMoreText>
-          </div> */}
-
-          {/* {verify === null || studentId !== verify._id ? (
-            <div></div>
-          ) : ( */}
           <div className="d-flex justify-content-end">
             <div style={{ paddingTop: 8 }}>
               <IconButton
@@ -192,7 +147,6 @@ const Feedback = ({
               </IconButton>
             </div>
           </div>
-          {/* )} */}
         </div>
       </Paper>
 
