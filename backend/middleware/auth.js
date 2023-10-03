@@ -1,7 +1,6 @@
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const student = require("../models/RD_models/student");
-
 const auth = async (req, res, next) => {
   try {
     const token = req.header("Authorization");

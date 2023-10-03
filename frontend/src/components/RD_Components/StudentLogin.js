@@ -1,8 +1,14 @@
-import React, { Component } from "react";
+import React, { Component, useEffect} from "react";
 import axios from "axios";
 import Button from "@material-ui/core/Button";
 import Footer from "../Layouts/footer";
 import UserNavBar from "../Layouts/UserNavBar";
+import IconButton from "@material-ui/core/IconButton";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import GoogleIcon from "@mui/icons-material/Google";
+import GoogleButton from "react-google-button";
+
+import { isEmail, isLength } from "validator"; // Importing validation functions
 
 export default class StudentLogin extends Component {
   constructor(props) {
@@ -15,29 +21,59 @@ export default class StudentLogin extends Component {
       pwd: "",
       token: "",
       open: false,
+      errors: {
+        email: "",
+        pwd: "",
+      },
     };
   }
+
+  validateForm = () => {
+    const { email, pwd } = this.state;
+    const errors = {};
+
+    if (!isEmail(email)) {
+      errors.email = "Invalid email address.";
+    }
+
+    if (!isLength(pwd, { min: 6 })) {
+      errors.pwd = "Password should be at least 6 characters.";
+    }
+
+    return errors;
+  };
+
   async StudentLoginSubmit(e) {
     e.preventDefault();
+    const errors = this.validateForm();
+
+    if (Object.keys(errors).length > 0) {
+      alert("Please enter valid Inputs");
+      return;
+    }
+
+    // Clear validation errors
+    this.setState({ errors: {} });
+
     const userData = {
       email: this.state.email,
       pwd: this.state.pwd,
     };
+
     await axios
       .post("http://localhost:8070/student/signin", userData)
       .then((res) => {
         this.setState({
           token: res.data.token,
         });
-        console.log(this.state.token);
         localStorage.setItem("Authorization", res.data.token);
         window.location = "/coursesdisplay";
-        alert("Login Successfull!!");
+        alert("Login Successful!!");
       })
       .catch((err) => {
         console.log(err);
         this.setState({ open: true });
-        alert("Loging Failded.Please Try again!!", err);
+        alert("Login Failed. Please try again!!");
       });
   }
 
@@ -105,6 +141,11 @@ export default class StudentLogin extends Component {
                             }
                             required
                           />
+                          {this.state.errors.email && (
+                            <div className="text-danger">
+                              {this.state.errors.email}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -129,6 +170,11 @@ export default class StudentLogin extends Component {
                             }
                             required
                           />
+                          {this.state.errors.pwd && (
+                            <div className="text-danger">
+                              {this.state.errors.pwd}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <Button
@@ -139,15 +185,43 @@ export default class StudentLogin extends Component {
                           height: 20 + "%",
                           color: "BLACK",
                           borderRadius: 20,
+                          marginLeft: "10%",
                         }}
                       >
                         <i className="fa fa-check-circle"></i>&nbsp; SIGN IN
                       </Button>
+                      <br /><br />
+
+                      {/* <GoogleButton
+                        onClick={() => {
+                          // Redirect to the Google sign-in URL
+                          window.location.href = "http://localhost:8070/auth/google";
+                        }}
+                      /> */}
+                      <Button
+                        startIcon={<GoogleIcon />}
+                        style={{
+                          background: "#FFFFFF",
+                          width: "80%",
+                          height: "20%",
+                          color: "BLACK",
+                          borderRadius: 20,
+                          border: "1px solid #DDDDDD",
+                          marginLeft: "-2%",
+                        }}
+                        onClick={() => {
+                          // Redirect to the Google sign-in URL
+                          window.location.href = "http://localhost:8070/auth/google";
+                        }}
+                      >
+                        Sign in with Google
+                      </Button>
+                      <br />
                       <div class="divider d-flex align-items-center my-4">
                         <span
                           id="passwordHelpInline"
                           class="form-text"
-                          style={{ marginBottom: "2px" }}
+                          style={{ marginBottom: "2px", marginLeft: "10%"}}
                         >
                           <center>
                             <label>New to UCL? &nbsp;&nbsp;</label>
@@ -169,3 +243,6 @@ export default class StudentLogin extends Component {
     );
   }
 }
+
+
+

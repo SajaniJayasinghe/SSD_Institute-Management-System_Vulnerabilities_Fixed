@@ -3,6 +3,7 @@ import axios from "axios";
 import Button from "@material-ui/core/Button";
 import Footer from "../Layouts/footer";
 import UserNavBar from "../Layouts/UserNavBar";
+import DOMPurify from "dompurify";
 
 export default function AdminRegistration() {
   const [adminName, setadminName] = useState("");
@@ -11,20 +12,88 @@ export default function AdminRegistration() {
   const [pwd2, setPassowrd2] = useState("");
   const [NIC, setNIC] = useState("");
   const [phone, setphone] = useState("");
+  const [errors, setErrors] = useState({
+    adminName: "",
+    email: "",
+    pwd1: "",
+    pwd2: "",
+    NIC: "",
+    phone: "",
+  });
 
   const sendData = async (e) => {
     e.preventDefault();
-    console.log(pwd1);
-    console.log(pwd2);
+
+    const sanitizedAdminName = DOMPurify.sanitize(adminName);
+    const sanitizedEmail = DOMPurify.sanitize(email);
+    const sanitizedPwd1 = DOMPurify.sanitize(pwd1);
+    const sanitizedPwd2 = DOMPurify.sanitize(pwd2);
+    const sanitizedNIC = DOMPurify.sanitize(NIC);
+    const sanitizedPhone = DOMPurify.sanitize(phone);
 
     let newAdmin = {
-      adminName: adminName,
-      email: email,
-      pwd: pwd1,
-      NIC: NIC,
-      phone: phone,
+      adminName: sanitizedAdminName,
+      email: sanitizedEmail,
+      pwd: sanitizedPwd1,
+      NIC: sanitizedNIC,
+      phone: sanitizedPhone,
     };
-    if (pwd1 == pwd2) {
+
+    const validationErrors = {};
+
+    // Admin Name validation
+    if (!sanitizedAdminName.trim()) {
+      validationErrors.adminName = "Admin Name is required.";
+    } else if (sanitizedAdminName.length > 50) {
+      validationErrors.adminName = "Admin Name should be less than 50 characters.";
+    }
+
+    // Email validation
+    if (!sanitizedEmail.trim()) {
+      validationErrors.email = "Email Address is required.";
+    } else if (!/^.+@.+\..+$/.test(sanitizedEmail)) {
+      validationErrors.email = "Invalid Email Address.";
+    } else if (sanitizedEmail.length > 100) {
+      validationErrors.email = "Email should be less than 100 characters.";
+    }
+
+    // Password validation
+    if (!sanitizedPwd1.trim()) {
+      validationErrors.pwd1 = "Password is required.";
+    } else if (sanitizedPwd1.length < 6) {
+      validationErrors.pwd1 = "Password should be at least 6 characters.";
+    }
+
+    // Confirm Password validation
+    if (sanitizedPwd1 !== sanitizedPwd2) {
+      validationErrors.pwd2 = "Passwords do not match.";
+    }
+
+    // NIC validation
+    if (!sanitizedNIC.trim()) {
+      validationErrors.NIC = "NIC is required.";
+    } else if (sanitizedNIC.length < 6) {
+      validationErrors.NIC = "NIC should be at least 6 characters.";
+    }
+
+    // Phone Number validation
+    if (!sanitizedPhone.trim()) {
+      validationErrors.phone = "Phone Number is required.";
+    } else if (!/^[0-9]{10}$/.test(sanitizedPhone)) {
+      validationErrors.phone = "Invalid Phone Number (must be 10 digits).";
+    }
+
+    // If there are validation errors, set them and show an alert message
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      alert("Please enter valid Inputs.");
+      return;
+    }
+
+    // If all validations pass, clear any previous errors
+    setErrors({});
+
+    if (sanitizedPwd1 === sanitizedPwd2) {
       axios
         .post("http://localhost:8070/admin/adminsignup", newAdmin)
         .then(() => {
@@ -35,8 +104,9 @@ export default function AdminRegistration() {
           alert(err);
         });
     } else {
-      alert("Password dismatch");
+      alert("Password mismatch");
     }
+
     setadminName("");
     setemail("");
     setPassowrd1("");
@@ -98,9 +168,13 @@ export default function AdminRegistration() {
                         <input
                           type="text"
                           className="form-control"
+                          value={adminName}
                           onChange={(e) => setadminName(e.target.value)}
                           required
                         />
+                        {errors.adminName && (
+                          <div className="text-danger">{errors.adminName}</div>
+                        )}
                       </div>
                     </div>
                     <div className="form-outline mb-2">
@@ -116,11 +190,13 @@ export default function AdminRegistration() {
                         <input
                           type="email"
                           className="form-control"
-                          pattern="(?![.-])((?![.-][.-])[a-zA-Z\d.-]){0,63}[a-zA-Z\d]@((?!-)((?!--)[a-zA-Z\d-]){0,63}[a-zA-Z\d]\.){1,2}([a-zA-Z]{2,14}\.)?[a-zA-Z]{2,14}"
-                          inputMode="email"
+                          value={email}
                           onChange={(e) => setemail(e.target.value)}
                           required
                         />
+                        {errors.email && (
+                          <div className="text-danger">{errors.email}</div>
+                        )}
                       </div>
                     </div>
                     <div className="form-outline mb-2">
@@ -136,13 +212,16 @@ export default function AdminRegistration() {
                         <input
                           type="password"
                           className="form-control"
+                          value={pwd1}
+                          onChange={(e) => setPassowrd1(e.target.value)}
                           data-toggle="tooltip"
                           data-placement="center"
-                          title="Your password MUST contain at least 8 charactors, including UPPER-lowercase letters and at least one number and a charactor = 'Sample@523'"
-                          pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$"
-                          onChange={(e) => setPassowrd1(e.target.value)}
+                          title="Your password MUST contain at least 8 characters, including UPPER-lowercase letters and at least one number and a character = 'Sample@523'"
                           required
                         />
+                        {errors.pwd1 && (
+                          <div className="text-danger">{errors.pwd1}</div>
+                        )}
                       </div>
                     </div>
                     <div className="form-outline mb-2">
@@ -158,10 +237,14 @@ export default function AdminRegistration() {
                         <input
                           type="password"
                           className="form-control"
-                          title="Your password MUST contain at least 8 charactors, including UPPER-lowercase letters and at least one number and a charactor = 'Sample@523'"
-                          pattern="^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,15}$"
+                          value={pwd2}
                           onChange={(e) => setPassowrd2(e.target.value)}
+                          title="Your password MUST contain at least 8 characters, including UPPER-lowercase letters and at least one number and a character = 'Sample@523'"
+                          required
                         />
+                        {errors.pwd2 && (
+                          <div className="text-danger">{errors.pwd2}</div>
+                        )}
                       </div>
                     </div>
                     <div className="form-outline mb-2">
@@ -177,9 +260,13 @@ export default function AdminRegistration() {
                         <input
                           type="text"
                           className="form-control"
+                          value={NIC}
                           onChange={(e) => setNIC(e.target.value)}
                           required
                         />
+                        {errors.NIC && (
+                          <div className="text-danger">{errors.NIC}</div>
+                        )}
                       </div>
                     </div>
                     <div className="form-outline mb-2">
@@ -195,10 +282,14 @@ export default function AdminRegistration() {
                         <input
                           type="text"
                           className="form-control"
+                          value={phone}
                           onChange={(e) => setphone(e.target.value)}
                           pattern="[0-9]{10}"
                           required
                         />
+                        {errors.phone && (
+                          <div className="text-danger">{errors.phone}</div>
+                        )}
                       </div>
                     </div>
                     <div className="d-flex justify-left pt-1">
@@ -218,10 +309,11 @@ export default function AdminRegistration() {
                         type="submit"
                         style={{
                           background: "#8BC0FF",
-                          width: 33 + "%",
+                          width: 43 + "%",
                           height: 20 + "%",
                           color: "BLACK",
                           borderRadius: 20,
+                          marginRight: 150,
                         }}
                       >
                         <i className="fa fa-check-circle" />
