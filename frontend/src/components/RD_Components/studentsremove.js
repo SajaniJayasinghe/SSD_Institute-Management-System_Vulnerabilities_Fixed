@@ -14,41 +14,39 @@ export default class Studentsremove extends Component {
     };
   }
 
-  //retrive supervisor members
+  // Retrieve student members
   componentDidMount() {
-    this.retrievestudentsDetails();
+    this.retrieveStudentsDetails();
   }
 
-  //data retrive
-  retrievestudentsDetails() {
+  // Data retrieve
+  retrieveStudentsDetails() {
     axios.get("http://localhost:8070/usersremove/getstudent").then((res) => {
       if (res.data.success) {
         this.setState({
           studentsremove: res.data.existingstudent,
         });
-
-        console.log(this.state.studentsremove);
       }
     });
   }
 
-  //delete cosupervisor
+  // Delete student
   onDelete = (studentID) => {
-    if (window.confirm("Are you sure you wish to delete this details?")) {
+    if (window.confirm("Are you sure you wish to delete this student?")) {
       axios
         .delete(`http://localhost:8070/usersremove/studentdelete/${studentID}`)
         .then((res) => {
           alert("Delete Successfully");
-          this.retrievestudentsDetails();
+          this.retrieveStudentsDetails();
         });
     }
   };
 
   filterData(studentsremove, searchKey) {
     const result = studentsremove.filter(
-      (studentsremov) =>
-        studentsremov.studentName.toLowerCase().includes(searchKey) ||
-        studentsremov.email.toLowerCase().includes(searchKey)
+      (student) =>
+        student.studentName.toLowerCase().includes(searchKey) ||
+        student.email.toLowerCase().includes(searchKey)
     );
     this.setState({ studentsremove: result });
   }
@@ -65,6 +63,11 @@ export default class Studentsremove extends Component {
 
   async generateReport() {
     const obj = { studentsremove: this.state.studentsremove };
+    if (obj.studentsremove.length === 0) {
+      alert("No data to generate a report for.");
+      return;
+    }
+
     await axios
       .post("http://localhost:8070/generatestudent", obj, {
         responseType: "arraybuffer",
@@ -72,15 +75,12 @@ export default class Studentsremove extends Component {
       })
       .then((res) => {
         alert("Report Generated");
-        console.log(res);
-        console.log(res.data);
-        const pdfBlog = new Blob([res.data], { type: "application/pdf" });
-        saveAs(pdfBlog, "Students.pdf");
+        const pdfBlob = new Blob([res.data], { type: "application/pdf" });
+        saveAs(pdfBlob, "Students.pdf");
       })
       .catch((err) => {
         console.log(err.message);
       });
-    console.log(obj);
   }
 
   render() {
@@ -110,7 +110,7 @@ export default class Studentsremove extends Component {
               <input
                 className="form-control"
                 type="search"
-                placeholder="Serach Here"
+                placeholder="Search Here"
                 name="searchQuery"
                 startIcon={<SearchSharpIcon />}
                 onChange={this.handleSearchArea}
@@ -131,19 +131,19 @@ export default class Studentsremove extends Component {
                     </tr>
                   </thead>
                   <tbody>
-                    {this.state.studentsremove.map((studentsremove, index) => (
+                    {this.state.studentsremove.map((student, index) => (
                       <tr key={index}>
                         <th scope="row">{index + 1}</th>
-                        <td>{studentsremove.studentName}</td>
-                        <td>{studentsremove.email}</td>
-                        <td>{studentsremove.NIC}</td>
-                        <td>{studentsremove.phone}</td>
+                        <td>{student.studentName}</td>
+                        <td>{student.email}</td>
+                        <td>{student.NIC}</td>
+                        <td>{student.phone}</td>
 
                         <td align="center">
                           <a
                             className="btn btn-danger"
                             href="#"
-                            onClick={() => this.onDelete(studentsremove._id)}
+                            onClick={() => this.onDelete(student._id)}
                           >
                             <i className="far fa-trash-alt"></i>
                           </a>
