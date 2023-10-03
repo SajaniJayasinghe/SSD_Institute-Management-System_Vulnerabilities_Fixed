@@ -19,9 +19,11 @@
     "@mui/icons-material": "^5.10.3",
     "@mui/material": "^5.10.3",
     "axios": "^0.27.2",
+    "dompurify": "^3.0.6",
     "file-saver": "^2.0.5",
     "firebase": "^9.9.3",
     "jsonwebtoken": "^8.5.1",
+    "jwt-decode": "^3.1.2",
     "koa": "^2.13.4",
     "material-icons": "^1.11.11",
     "moment": "^2.29.4",
@@ -35,7 +37,8 @@
     "react-router-dom": "^6.3.0",
     "react-show-more-text": "^1.5.2",
     "react-toastify": "^9.0.8",
-    "stars-rating": "^1.1.0"
+    "stars-rating": "^1.1.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "buffer": "^6.0.3",
