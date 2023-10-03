@@ -309,10 +309,11 @@ export default function AdminRegistration() {
                         type="submit"
                         style={{
                           background: "#8BC0FF",
-                          width: 33 + "%",
+                          width: 43 + "%",
                           height: 20 + "%",
                           color: "BLACK",
                           borderRadius: 20,
+                          marginRight: 150,
                         }}
                       >
                         <i className="fa fa-check-circle" />

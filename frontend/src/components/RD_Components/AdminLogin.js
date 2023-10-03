@@ -93,6 +93,7 @@ class AdminLogin extends Component {
                                                     height: 20 + "%",
                                                     color: "BLACK",
                                                     borderRadius: 20,
+                                                    marginLeft: "10%",
                                                 }}>
                                                 <i className="fa fa-check-circle"></i>&nbsp; SIGN IN
                                             </Button>
