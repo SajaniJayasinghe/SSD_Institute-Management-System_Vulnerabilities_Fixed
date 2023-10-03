@@ -162,6 +162,8 @@ router.route("/:courseID").get((req, res) => {
 });
 
 // Delete course
+//Error handling is crucial in web applications to ensure that errors are properly
+//handled and appropriate responses are sent back to the client.
 router.delete("/delete/:courseID", validateCourseId, async (req, res) => {
   try {
     const courseID = req.params.courseID;

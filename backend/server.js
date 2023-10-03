@@ -7,6 +7,16 @@ const app = express();
 const multer = require("multer");
 require("dotenv").config();
 const path = require("path");
+const rateLimit = require("express-rate-limit");
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 3, // Maximum 3 requests per minute from the same IP
+  message: "Too many requests from this IP, please try again later.",
+});
+
+// Apply rate limiter to all routes or specific routes as needed
+app.use(limiter);
 
 //app middleware
 app.use(bodyParser.json());

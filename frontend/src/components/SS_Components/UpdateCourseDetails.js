@@ -11,15 +11,16 @@ import {
 import Button from "@material-ui/core/Button";
 import Footer from "../Layouts/footer";
 import AdminNavBar from "../Layouts/AdminNavBar";
+import DOMPurify from "dompurify";
 
 export default function UpdateCourseDetails() {
-  const [course_name, setcourse_name] = useState("");
-  const [course_code, setcourse_code] = useState("");
-  const [subtitle, setsubtitle] = useState("");
-  const [lecture_name, setlecture_name] = useState("");
-  const [description, setdescription] = useState("");
-  const [courseadded_date, setcourseadded_date] = useState("");
-  const [course_thumbnail, setcourse_thumbnail] = useState("");
+  const [course_name, setCourseName] = useState("");
+  const [course_code, setCourseCode] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [lecture_name, setLectureName] = useState("");
+  const [description, setDescription] = useState("");
+  const [courseadded_date, setCourseAddedDate] = useState("");
+  const [course_thumbnail, setCourseThumbnail] = useState("");
 
   const params = useParams();
   const courseID = params.courseID;
@@ -27,84 +28,128 @@ export default function UpdateCourseDetails() {
   useEffect(() => {
     axios.get(`http://localhost:8070/course/${courseID}`).then((res) => {
       if (res.data) {
-        setcourse_name(res.data.existingCourses.course_name);
-        setcourse_code(res.data.existingCourses.course_code);
-        setsubtitle(res.data.existingCourses.subtitle);
-        setlecture_name(res.data.existingCourses.lecture_name);
-        setdescription(res.data.existingCourses.description);
-        setcourseadded_date(res.data.existingCourses.courseadded_date);
-        setcourse_thumbnail(res.data.existingCourses.course_thumbnail);
+        const courseData = res.data.existingCourses;
+        setCourseName(courseData.course_name);
+        setCourseCode(courseData.course_code);
+        setSubtitle(courseData.subtitle);
+        setLectureName(courseData.lecture_name);
+        setDescription(courseData.description);
+        setCourseAddedDate(courseData.courseadded_date);
       }
-      console.log(res.data);
     });
-  }, []);
+  }, [courseID]);
 
   const onUpdate = (e) => {
     e.preventDefault();
 
-    const fileName = new Date().getTime().toString() + course_thumbnail.name;
+    // Check for null or empty values
+    if (
+      !course_name ||
+      !course_code ||
+      !subtitle ||
+      !lecture_name ||
+      !description ||
+      !courseadded_date
+    ) {
+      alert("Please fill in all required fields.");
+      return;
+    }
 
-    const storage = getStorage(app);
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, course_thumbnail);
+    // Sanitize user inputs using DOMPurify
+    const sanitizedCourseName = DOMPurify.sanitize(course_name);
+    const sanitizedCourseCode = DOMPurify.sanitize(course_code);
+    const sanitizedSubtitle = DOMPurify.sanitize(subtitle);
+    const sanitizedLectureName = DOMPurify.sanitize(lecture_name);
+    const sanitizedDescription = DOMPurify.sanitize(description);
+    const sanitizedCourseAddedDate = DOMPurify.sanitize(courseadded_date);
 
-    // Register three observers:
-    // 1. 'state_changed' observer, called any time the state changes
-    // 2. Error observer, called on failure
-    // 3. Completion observer, called on successful completion
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        // Observe state change events such as progress, pause, and resume
-        // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-        const progress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log("Upload is " + progress + "% done");
-        switch (snapshot.state) {
-          case "paused":
-            console.log("Upload is paused");
-            break;
-          case "running":
-            console.log("Upload is running");
-            break;
-        }
-      },
+    const updateCourse = {
+      course_name: sanitizedCourseName,
+      course_code: sanitizedCourseCode,
+      subtitle: sanitizedSubtitle,
+      lecture_name: sanitizedLectureName,
+      description: sanitizedDescription,
+      courseadded_date: sanitizedCourseAddedDate,
+    };
 
-      (error) => {
-        // Handle unsuccessful uploads
-      },
-      () => {
-        // Handle successful uploads on complete
-        // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-        getDownloadURL(uploadTask.snapshot.ref).then((course_thumbnail) => {
-          console.log("File available at", course_thumbnail);
+    // Check if any of the sanitized inputs are empty after sanitization
+    const isEmptyInput = Object.values(updateCourse).some((value) => !value);
 
-          const updateCourse = {
-            course_name,
-            course_code,
-            subtitle,
-            lecture_name,
-            description,
-            courseadded_date,
-            course_thumbnail,
-          };
+    if (isEmptyInput) {
+      alert("Please enter valid data.");
+      return;
+    }
 
-          axios
-            .put(
-              `http://localhost:8070/course/update/${courseID}`,
-              updateCourse
-            )
-            .then((res) => {
-              if (res.data) {
-                alert("Update Successfully....!");
-                window.location.href = "/courseDetails";
-              } else {
-                alert("Update Unsuccessfelly...!");
-              }
-            });
-        });
+    if (!course_thumbnail) {
+      // If the course thumbnail is not updated, use the existing one
+      updateCourse.course_thumbnail = course_thumbnail;
+      sendUpdateRequest(updateCourse);
+    } else {
+      // Upload the new course thumbnail
+      try {
+        const fileName =
+          new Date().getTime().toString() + course_thumbnail.name;
+        const storage = getStorage(app);
+        const storageRef = ref(storage, fileName);
+        const uploadTask = uploadBytesResumable(storageRef, course_thumbnail);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+            switch (snapshot.state) {
+              case "paused":
+                console.log("Upload is paused");
+                break;
+              case "running":
+                console.log("Upload is running");
+                break;
+            }
+          },
+          (error) => {
+            console.error("Error uploading file:", error);
+            alert("Error uploading file. Please try again later.");
+          },
+          async () => {
+            // Handle successful uploads
+            try {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              updateCourse.course_thumbnail = DOMPurify.sanitize(downloadURL);
+              sendUpdateRequest(updateCourse);
+            } catch (error) {
+              console.error("Error getting download URL:", error);
+              alert("Error getting download URL. Please try again later.");
+            }
+          }
+        );
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        alert("Error uploading file. Please try again later.");
       }
-    );
+    }
+  };
+
+  const sendUpdateRequest = (data) => {
+    axios
+      .put(`http://localhost:8070/course/update/${courseID}`, data)
+      .then((res) => {
+        if (res.data) {
+          alert("Course Updated Successfully");
+          window.location.href = "/courseDetails";
+        } else {
+          alert("Update Unsuccessful...!");
+        }
+      })
+      .catch((err) => {
+        console.error("Error updating course:", err);
+        alert("Error updating course");
+      });
+  };
+
+  const handleFileChange = (e) => {
+    setCourseThumbnail(e.target.files[0]);
   };
 
   return (
@@ -112,7 +157,7 @@ export default function UpdateCourseDetails() {
       <AdminNavBar />
       <br />
       <br />
-      <div class="row d-flex align-items-center justify-content-center">
+      <div className="row d-flex align-items-center justify-content-center">
         <div
           style={{
             width: 1000,
@@ -121,28 +166,29 @@ export default function UpdateCourseDetails() {
             backgroundSize: "1000px ",
           }}
         >
-          <div class="card-body">
+          <div className="card-body">
             <form action="" method="post" name="form" onSubmit={onUpdate}>
               <div style={{ display: "flex" }}>
-                <div class="row g-0" style={{ flex: 1 }}>
+                <div className="row g-0" style={{ flex: 1 }}>
                   <img
-                    src="https:res.cloudinary.com/nibmsa/image/upload/v1661690483/top-banner-with-no-bg-1_vwvnct.webp"
+                    src="https://res.cloudinary.com/nibmsa/image/upload/v1661690483/top-banner-with-no-bg-1_vwvnct.webp"
                     style={{ objectFit: "cover" }}
-                  ></img>
+                    alt="Course Thumbnail"
+                  />
                   <br />
                   <br />
                 </div>
 
-                <div class="col-xl-10" style={{ flex: 1 }}>
+                <div className="col-xl-10" style={{ flex: 1 }}>
                   <br />
                   <div
-                    class="form-outline mb-2"
+                    className="form-outline mb-2"
                     style={{ fontFamily: "times new roman" }}
                   >
                     <h3 style={{ fontFamily: "times new roman" }}>
                       &emsp;&emsp;
                       <b>
-                        <u>Update&nbsp;Course Details</u>
+                        <u>Update Course Details</u>
                       </b>
                     </h3>
                     <br />
@@ -152,12 +198,12 @@ export default function UpdateCourseDetails() {
                       </div>
                       <input
                         type="text"
-                        class="form-control"
+                        className="form-control"
                         value={course_name}
                         name="course_name"
                         placeholder="Enter course name"
                         onChange={(e) => {
-                          setcourse_name(e.target.value);
+                          setCourseName(e.target.value);
                         }}
                         required
                       />
@@ -171,12 +217,12 @@ export default function UpdateCourseDetails() {
                       <input
                         type="text"
                         pattern="^[a-zA-Z0-9]*$"
-                        class="form-control"
+                        className="form-control"
                         value={course_code}
                         name="course_code"
                         placeholder="Enter course code"
                         onChange={(e) => {
-                          setcourse_code(e.target.value);
+                          setCourseCode(e.target.value);
                         }}
                         required
                       />
@@ -189,12 +235,12 @@ export default function UpdateCourseDetails() {
                       </div>
                       <input
                         type="text"
-                        class="form-control"
+                        className="form-control"
                         value={subtitle}
                         name="subtitle"
                         placeholder="Enter subtitle "
                         onChange={(e) => {
-                          setsubtitle(e.target.value);
+                          setSubtitle(e.target.value);
                         }}
                         required
                       />
@@ -207,12 +253,12 @@ export default function UpdateCourseDetails() {
                       </div>
                       <input
                         type="text"
-                        class="form-control"
+                        className="form-control"
                         value={lecture_name}
                         name="lecture_name"
                         placeholder="Enter lecture name"
                         onChange={(e) => {
-                          setlecture_name(e.target.value);
+                          setLectureName(e.target.value);
                         }}
                         required
                       />
@@ -225,12 +271,12 @@ export default function UpdateCourseDetails() {
                       </div>
                       <input
                         type="text"
-                        class="form-control"
+                        className="form-control"
                         value={description}
                         name="description"
                         placeholder="Enter description"
                         onChange={(e) => {
-                          setdescription(e.target.value);
+                          setDescription(e.target.value);
                         }}
                         required
                       />
@@ -244,12 +290,12 @@ export default function UpdateCourseDetails() {
                       <input
                         style={{ marginLeft: "20px" }}
                         type="date"
-                        class="form-control"
+                        className="form-control"
                         value={courseadded_date}
                         name="courseadded_date"
                         placeholder="Enter Course added Date"
                         onChange={(e) => {
-                          setcourseadded_date(e.target.value);
+                          setCourseAddedDate(e.target.value);
                         }}
                         required
                       />
@@ -263,8 +309,9 @@ export default function UpdateCourseDetails() {
                       </div>
                       <input
                         type="file"
-                        class="form-control"
-                        onChange={(e) => setcourse_thumbnail(e.target.files[0])}
+                        className="form-control"
+                        // onChange={(e) => setCourseThumbnail(e.target.files[0])}
+                        onChange={handleFileChange}
                       />
                     </div>
                     <br />
@@ -275,7 +322,7 @@ export default function UpdateCourseDetails() {
                       className="w-10"
                       style={{
                         background: "#8BC0FF",
-                        width: 23 + "%",
+                        width: "23%",
                         color: "BLACK",
                         borderRadius: 20,
                       }}
@@ -291,7 +338,7 @@ export default function UpdateCourseDetails() {
                       className="w-10"
                       style={{
                         background: "#8BC0FF",
-                        width: 23 + "%",
+                        width: "23%",
                         color: "BLACK",
                         borderRadius: 20,
                       }}
