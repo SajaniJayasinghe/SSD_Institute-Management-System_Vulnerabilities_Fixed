@@ -17,7 +17,11 @@ const AdminFeedbacks = () => {
       const response = await axios.get(
         "http://localhost:8070/admin/getcomments"
       );
-      setFeedbacks(response.data.feedbacks);
+      if (response.data && response.data.feedbacks) {
+        setFeedbacks(response.data.feedbacks);
+      } else {
+        console.error("Invalid response from the server");
+      }
     } catch (error) {
       console.error("Error fetching feedbacks:", error.message);
     }
@@ -34,9 +38,13 @@ const AdminFeedbacks = () => {
         }
       );
 
-      alert("Report Generated");
-      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
-      saveAs(pdfBlob, "Feedbacks.pdf");
+      if (response.data) {
+        alert("Report Generated");
+        const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+        saveAs(pdfBlob, "Feedbacks.pdf");
+      } else {
+        console.error("Invalid response from the server");
+      }
     } catch (error) {
       console.error("Error generating report:", error.message);
     }
