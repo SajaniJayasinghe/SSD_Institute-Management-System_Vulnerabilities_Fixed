@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 
 //import { Context } from "../../context/Context";
 import "./singlePost.css";
@@ -16,6 +17,7 @@ export default function SinglePost() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [updateMode, setUpdateMode] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const params = useParams();
   const id = params.blogID;
@@ -28,11 +30,16 @@ export default function SinglePost() {
   };
 
   useEffect(() => {
-    axios.get("http://localhost:8070/student/profile", config).then((res) => {
-      if (res.data) {
-        setAuthor(res.data.Stu.studentName);
-      }
-    });
+    axios
+      .get("http://localhost:8070/student/profile", config)
+      .then((res) => {
+        if (res.data) {
+          setAuthor(res.data.Stu.studentName);
+        }
+      })
+      .catch((error) => {
+        alert("Error fetching author information.");
+      });
   }, []);
 
   useEffect(() => {
@@ -45,8 +52,7 @@ export default function SinglePost() {
           setDescription(res.data.existingBlogs.description);
         })
         .catch((error) => {
-          // setError(error.message);
-          console.log(error.message);
+          alert("Error fetching blog post.");
         });
     };
     getPost();
@@ -57,17 +63,40 @@ export default function SinglePost() {
       await axios
         .delete(`http://localhost:8070/blog/delete/${post._id}`, config)
         .then((res) => {
-          alert("Your description Deleted");
+          alert("Your blog post has been deleted.");
           window.location = `/readblogs`;
         });
-    } catch (err) {}
+    } catch (err) {
+      alert("Error deleting blog post.");
+    }
   };
 
-  const handleUpdate = async () => {
+  const sanitizeInput = (input) => {
+    return DOMPurify.sanitize(input);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+
+    const sanitizedTitle = sanitizeInput(title);
+    const sanitizedDescription = sanitizeInput(description);
+
+    if (sanitizedTitle !== title) {
+      setAlertMessage("Please enter a valid title.");
+      return;
+    }
+    if (sanitizedDescription !== description) {
+      setAlertMessage("Please enter a valid description.");
+      return;
+    }
+
+    setTitle(sanitizedTitle);
+    setDescription(sanitizedDescription);
+
     const updatepost = {
       studentName: author,
-      title,
-      description,
+      title: sanitizedTitle,
+      description: sanitizedDescription,
     };
 
     try {
@@ -76,9 +105,11 @@ export default function SinglePost() {
         updatepost,
         config
       );
-
+      alert("Blog post updated successfully.");
       setUpdateMode(false);
-    } catch (err) {}
+    } catch (err) {
+      alert("Error updating blog post.");
+    }
   };
 
   return (
@@ -128,9 +159,16 @@ export default function SinglePost() {
           <p className="singlePostDesc">{description}</p>
         )}
         {updateMode && (
-          <button className="singlePostButton" onClick={handleUpdate}>
-            Update
-          </button>
+          <div className="singlePostButtonContainer">
+            <button className="singlePostButton" onClick={handleUpdate}>
+              Update
+            </button>
+            {alertMessage && (
+              <div className="alert alert-danger singlePostAlert">
+                {alertMessage}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

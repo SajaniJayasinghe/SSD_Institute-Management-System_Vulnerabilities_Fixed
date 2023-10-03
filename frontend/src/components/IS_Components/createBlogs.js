@@ -2,39 +2,41 @@ import React, { useState, useCallback } from "react";
 import axios from "axios";
 import app from "../../FireBase";
 import "./createBlogs.css";
-import {getDownloadURL,getStorage,ref,uploadBytesResumable, } from "firebase/storage";
+import {
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 import NavBar from "../Layouts/Navbar";
 import Footer from "../Layouts/footer";
+import DOMPurify from "dompurify";
 
-export default function CreateBlogs(){
+export default function CreateBlogs() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photo, setPhoto] = useState("");
   const [open, setOpen] = useState(false);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-   
-    const fileName =
-      new Date().getTime().toString() +
-      photo.name;
+
+    // Sanitize user input using DOMPurify
+    const sanitizedTitle = DOMPurify.sanitize(title);
+    const sanitizedDescription = DOMPurify.sanitize(description);
+
+    const fileName = new Date().getTime().toString() + photo.name;
     const storage = getStorage(app);
     const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(
-      storageRef,
-      photo,
- 
-    );
-
+    const uploadTask = uploadBytesResumable(storageRef, photo);
 
     // Register three observers:
     // 1. 'state_changed' observer, called any time the state changes
     // 2. Error observer, called on failure
     // 3. Completion observer, called on successful completion
     uploadTask.on(
-        "state_changed",
-        (snapshot) => {
+      "state_changed",
+      (snapshot) => {
         // Observe state change events such as progress, pause, and resume
         // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
         const progress =
@@ -55,13 +57,12 @@ export default function CreateBlogs(){
       () => {
         // Handle successful uploads on complete
         // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-        getDownloadURL(uploadTask.snapshot.ref).then(
-            (photo) => {
-              console.log("File available at", photo);
-        
+        getDownloadURL(uploadTask.snapshot.ref).then((photo) => {
+          console.log("File available at", photo);
+
           const blog = {
-            title: title,
-            description: description,
+            title: sanitizedTitle,
+            description: sanitizedDescription,
             photo: photo,
           };
 
@@ -73,18 +74,14 @@ export default function CreateBlogs(){
           };
           console.log("auth"),
             axios
-              .post(
-                `http://localhost:8070/blog/addblogs`,
-                blog,
-                config
-              )
+              .post(`http://localhost:8070/blog/addblogs`, blog, config)
               .then((res) => {
                 console.log("data send to database");
                 alert("Blog created successfully...");
-              window.location="/readblogs"
+                window.location = "/readblogs";
               })
               .catch((error) => {
-                alert("Please Register To the Application");
+                alert("Please Enter valid inputs");
                 console.log(error.message);
               });
         });
@@ -94,11 +91,16 @@ export default function CreateBlogs(){
 
   return (
     <div>
-      <NavBar/>
-    <div className="write">
-       {photo && (
-        <img className="writeImg" src={ photo}  alt="" />
-      )}
+      <NavBar />
+      <div className="write">
+        {photo && (
+          <img
+            className="writeImg"
+            src={DOMPurify.sanitize(URL.createObjectURL(photo))}
+            alt="Selected"
+          />
+        )}
+
         <form className="writeForm" onSubmit={handleSubmit}>
           <div className="writeFormGroup">
             <label htmlFor="fileInput">
@@ -131,9 +133,7 @@ export default function CreateBlogs(){
           </button>
         </form>
       </div>
-      <Footer/>
-      </div>
+      <Footer />
+    </div>
   );
-};
-
-
+}
