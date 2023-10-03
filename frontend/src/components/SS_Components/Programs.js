@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
-import NavBar from "../Layouts/Navbar";
+import NavBar from "../Layouts/NavBar";
 
 export default class Programs extends Component {
   constructor(props) {
