@@ -100,7 +100,8 @@ router.post("/adminlogout", adminauth, async (req, res) => {
     await req.Adm.save();
     res.status(200).send("Logout successfully");
   } catch (error) {
-    console.log(error.message);
+     // Log the error for debugging
+    console.error(error);
     res.status(500).send({ error: "Internal server error" });
   }
 });

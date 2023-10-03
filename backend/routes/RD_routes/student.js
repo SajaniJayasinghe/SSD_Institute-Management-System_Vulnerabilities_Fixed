@@ -73,19 +73,23 @@ router.get("/profile", auth, async (req, res) => {
   });
 
   
-  //log out profile
+  // Logout profile
   router.post("/logout", auth, async (req, res) => {
-    try {
-      req.Stu.tokens = req.Stu.tokens.filter((token) => {
-        return token.token !== req.token;
-      });
-      await req.Stu.save();
-      res.status(200).send("Logout successfully");
-    } catch (error) {
-      res.status(500).send(error.message);
-      console.log(error.message);
-    }   
- });
+  try {
+    req.Stu.tokens = req.Stu.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+    await req.Stu.save();
+    res.status(200).send("Logout successfully");
+  } catch (error) {
+    console.error("Logout error:", error);
+    if (error instanceof OperationalError) {
+      return res.status(400).send(error.message);
+    }
+    // Handle unexpected errors 
+    return res.status(500).send("Internal Server Error");
+  }
+});
 
 // update student profile
 router.put('/update', auth, async (req, res) => {
