@@ -24,19 +24,4 @@ AuthRouter.get("/logout", (req, res) => {
   res.redirect("http://localhost:1234/");
 });
 
-// AuthRouter.get(
-//   "/facebook",
-//   passport.authenticate("facebook", { scope: ["email"] })
-// );
-
-// AuthRouter.get(
-//   "/facebook/callback",
-//   passport.authenticate("facebook"),
-//   (req, res) => {
-//     const token = helperUtil.createToken(req.user);
-//     res.cookie("recruitment", token, { maxAge: 3600000 }); // Store JWT in a cookie
-//     res.redirect("http://localhost:8070/coursesdisplay");
-//   }
-// );
-
 module.exports = AuthRouter;
