@@ -4,6 +4,7 @@ import StarRating from "stars-rating";
 import axios from "axios";
 import Snackbar from "@material-ui/core/Snackbar";
 import ChatIcon from "@material-ui/icons/Chat";
+import DOMPurify from "dompurify";
 // import Ratings from "./ratings.component";
 
 const CreateFeedback = (courseID) => {
@@ -25,41 +26,47 @@ const CreateFeedback = (courseID) => {
 
   const OnFormSubmit = async (e) => {
     e.preventDefault();
-    console.log(courseID.courseID.courseID);
 
     if (rating === 0) {
-      console.log("this is in check function");
       setOpen(true);
       return;
     }
 
+    if (comment.length > 100) {
+      alert("Comment cannot exceed 100 characters.");
+      return;
+    }
+
+    const sanitizedComment = DOMPurify.sanitize(comment); // Sanitize user input
+
+    // Check if sanitized comment is different from original comment
+    if (sanitizedComment !== comment) {
+      alert("Please enter a valid comment.");
+      return;
+    }
     const feedback = {
       rating: rating,
-      comment: comment,
+      comment: sanitizedComment
     };
 
     const config = {
       headers: {
         Authorization: localStorage.getItem("Authorization"),
-        "content-type": "application/json",
-      },
+        "content-type": "application/json"
+      }
     };
-    console.log("auth"),
-      axios
-        .post(
-          `http://localhost:8070/feedbacks/add/${courseID.courseID.courseID}`,
-          feedback,
-          // console.log("auth"),
-          config
-        )
-        .then((res) => {
-          console.log("data send to database");
-          window.location.reload();
-        })
-        .catch((error) => {
-          alert("Please Register To the Application");
-          console.log(error.message);
-        });
+    axios
+      .post(
+        `http://localhost:8070/feedbacks/add/${courseID.courseID.courseID}`,
+        feedback,
+        config
+      )
+      .then((res) => {
+        window.location.reload();
+      })
+      .catch((error) => {
+        alert("Please Register To the Application");
+      });
   };
 
   return (
@@ -98,7 +105,7 @@ const CreateFeedback = (courseID) => {
                 style={{
                   background: "rgb(139, 192, 255)",
                   width: 50 + "%",
-                  borderRadius: "20px",
+                  borderRadius: "20px"
                 }}
                 startIcon={<ChatIcon />}
                 disableElevation

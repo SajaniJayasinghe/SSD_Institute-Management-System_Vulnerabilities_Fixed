@@ -71,7 +71,7 @@ process.env.SUPPRESS_NO_CONFIG_WARNING = "y";
 mongoose.connect(URL, {
   //useCreateIndex: true,
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
   //useFindAndModify: false
 });
 

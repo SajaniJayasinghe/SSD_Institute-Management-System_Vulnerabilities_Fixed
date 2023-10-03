@@ -17,22 +17,22 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     "& > *": {
       margin: theme.spacing(1),
-      padding: 5,
+      padding: 5
     },
-    color: "#dd2c00",
-  },
+    color: "#dd2c00"
+  }
 }));
 
 const useUpdate = makeStyles((theme) => ({
   root: {
     // color: "#f4511e"
-  },
+  }
 }));
 
 const useDelete = makeStyles((theme) => ({
   root: {
     // color: "#dd2c00"
-  },
+  }
 }));
 
 const useForceUpdate = () => useState()[1];
@@ -45,7 +45,7 @@ const Feedback = ({
   studentName,
   studentPicture,
   rating,
-  comment,
+  comment
 }) => {
   const classes = useStyles();
   const deleteButton = useDelete();
@@ -54,16 +54,6 @@ const Feedback = ({
   const [open, setOpen] = useState(false);
   const [onHide, setOnHide] = useState(true);
   const forceUpdate = useForceUpdate();
-  let verify = null;
-  if (token) {
-    verify = jwt.verify(token, "jwtSecret");
-    console.log("key id", verify._id);
-    console.log("student id", studentId);
-    console.log("student name", studentName);
-    console.log(studentId === verify._id);
-  } else {
-    verify = null;
-  }
 
   const updateComment = () => {
     setOpen(true);
@@ -74,8 +64,8 @@ const Feedback = ({
     const config = {
       headers: {
         Authorization: localStorage.getItem("Authorization"),
-        "content-type": "application/json",
-      },
+        "content-type": "application/json"
+      }
     };
 
     if (window.confirm("Are you sure you wish to delete this Feedback?")) {
@@ -113,7 +103,7 @@ const Feedback = ({
                 style={{
                   pointerEvents: "none",
                   fontWeight: "bold",
-                  paddingLeft: 10,
+                  paddingLeft: 10
                 }}
               >
                 {studentName}
@@ -123,7 +113,7 @@ const Feedback = ({
                 style={{
                   textAlign: "left",
                   pointerEvents: "none",
-                  paddingLeft: 10,
+                  paddingLeft: 10
                 }}
               >
                 <StarRating
@@ -138,32 +128,25 @@ const Feedback = ({
         </ul>
 
         <div style={{ fontSize: 15 }}>
-          <div style={{ paddingLeft: 105, display: "flex" }}>
-            {comment}
-          </div>
-
-          {verify === null || studentId !== verify._id ? (
-            <div></div>
-          ) : (
-            <div className="d-flex justify-content-end">
-              <div style={{ paddingTop: 8 }}>
-                <IconButton
-                  aria-label="delete"
-                  color="inherit"
-                  onClick={deleteComment}
-                >
-                  <DeleteIcon className={deleteButton.root} fontSize="small" />
-                </IconButton>
-                <IconButton
-                  aria-label="update"
-                  color="inherit"
-                  onClick={updateComment}
-                >
-                  <UpdateIcon className={update.root} fontSize="small" />
-                </IconButton>
-              </div>
+          <div style={{ paddingLeft: 105, display: "flex" }}>{comment}</div>
+          <div className="d-flex justify-content-end">
+            <div style={{ paddingTop: 8 }}>
+              <IconButton
+                aria-label="delete"
+                color="inherit"
+                onClick={deleteComment}
+              >
+                <DeleteIcon className={deleteButton.root} fontSize="small" />
+              </IconButton>
+              <IconButton
+                aria-label="update"
+                color="inherit"
+                onClick={updateComment}
+              >
+                <UpdateIcon className={update.root} fontSize="small" />
+              </IconButton>
             </div>
-          )}
+          </div>
         </div>
       </Paper>
 

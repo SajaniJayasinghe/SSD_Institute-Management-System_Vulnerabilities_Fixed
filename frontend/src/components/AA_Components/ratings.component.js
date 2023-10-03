@@ -7,17 +7,17 @@ import axios from "axios";
 const BorderLinearProgress = withStyles((theme) => ({
   root: {
     height: 10,
-    borderRadius: 1,
+    borderRadius: 1
   },
   colorPrimary: {
     color: "#eb8a2f",
     backgroundColor:
-      theme.palette.grey[theme.palette.type === "light" ? 200 : 700],
+      theme.palette.grey[theme.palette.type === "light" ? 200 : 700]
   },
   bar: {
     borderRadius: 1,
-    backgroundColor: "#3498eb",
-  },
+    backgroundColor: "#3498eb"
+  }
 }))(LinearProgress);
 
 const Ratings = ({ ratings, courseID }) => {
@@ -50,7 +50,6 @@ const Ratings = ({ ratings, courseID }) => {
           .get(`http://localhost:8070/course/${courseID.courseID}`)
           .then((res) => {
             setAverageRating(res.data.existingCourses.averageRating);
-            console.log(res.data.existingCourses.averageRating);
             setLoading(false);
           })
           .catch((err) => {
@@ -104,7 +103,7 @@ const Ratings = ({ ratings, courseID }) => {
                       pointerEvents: "none",
                       paddingTop: 8,
                       paddingLeft: 8,
-                      color: "#008B8B",
+                      color: "#008B8B"
                     }}
                   >
                     {fiveStar}%
@@ -137,7 +136,7 @@ const Ratings = ({ ratings, courseID }) => {
                       pointerEvents: "none",
                       paddingTop: 8,
                       paddingLeft: 8,
-                      color: "#008B8B",
+                      color: "#008B8B"
                     }}
                   >
                     {fourStar}%
@@ -170,7 +169,7 @@ const Ratings = ({ ratings, courseID }) => {
                       pointerEvents: "none",
                       paddingTop: 8,
                       paddingLeft: 8,
-                      color: "#008B8B",
+                      color: "#008B8B"
                     }}
                   >
                     {threeStar}%
@@ -203,7 +202,7 @@ const Ratings = ({ ratings, courseID }) => {
                       pointerEvents: "none",
                       paddingTop: 8,
                       paddingLeft: 8,
-                      color: "#008B8B",
+                      color: "#008B8B"
                     }}
                   >
                     {twoStar}%
@@ -236,7 +235,7 @@ const Ratings = ({ ratings, courseID }) => {
                       pointerEvents: "none",
                       paddingTop: 8,
                       paddingLeft: 8,
-                      color: "#008B8B",
+                      color: "#008B8B"
                     }}
                   >
                     {oneStar}%

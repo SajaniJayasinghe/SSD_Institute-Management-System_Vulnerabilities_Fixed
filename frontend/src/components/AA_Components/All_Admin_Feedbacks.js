@@ -1,80 +1,75 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import AdminFeedback from "./Admin_Feedback";
 import Button from "@material-ui/core/Button";
 import InsertDriveFileIcon from "@material-ui/icons/InsertDriveFile";
 import { saveAs } from "file-saver";
 
-export default class AdminFeedbacks extends React.Component {
-  constructor(props) {
-    super();
-    this.generateReport = this.generateReport.bind(this);
-    this.state = {
-      feedbacks: [],
-    };
-  }
+const AdminFeedbacks = () => {
+  const [feedbacks, setFeedbacks] = useState([]);
 
-  async componentDidMount() {
-    await axios
-      .get("http://localhost:8070/admin/getcomments")
-      .then((res) => {
-        this.setState({ feedbacks: res.data.feedbacks });
-        console.log(res.data.feedbacks);
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
-  }
+  useEffect(() => {
+    fetchFeedbacks();
+  }, []);
 
-  async generateReport() {
-    const obj = { feedbacks: this.state.feedbacks };
-    await axios
-      .post("http://localhost:8070/generatefeedbackreport", obj, {
-        responseType: "arraybuffer",
-        headers: { Accept: "application/pdf" },
-      })
-      .then((res) => {
-        alert("Report Generated");
-        console.log(res);
-        console.log(res.data);
-        const pdfBlog = new Blob([res.data], { type: "application/pdf" });
-        saveAs(pdfBlog, "Feedbacks.pdf");
+  const fetchFeedbacks = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8070/admin/getcomments"
+      );
+      setFeedbacks(response.data.feedbacks);
+    } catch (error) {
+      console.error("Error fetching feedbacks:", error.message);
+    }
+  };
 
-        //window.open(res.data, '_blank');
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
-    console.log(obj);
-  }
+  const generateReport = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8070/generatefeedbackreport",
+        { feedbacks },
+        {
+          responseType: "arraybuffer",
+          headers: { Accept: "application/pdf" }
+        }
+      );
 
-  render() {
-    return (
-      <div>
-        <Button
-          className="form-group"
-          id="bb"
-          type="submit"
-          style={{ background: "#41AAC8", width: 40 + "%", align: "right" }}
-          startIcon={<InsertDriveFileIcon />}
-          onClick={this.generateReport}
-        >
-          Generate Report
-        </Button>
-        <br />
-        <br />
-        {this.state.feedbacks.map((feedback) => (
-          <div>
-            <AdminFeedback
-              studentName={feedback.studentName}
-              rating={feedback.rating}
-              comment={feedback.comment}
-              studentPicture={feedback.studentPicture}
-              date={feedback.date}
-            />
-          </div>
-        ))}
-      </div>
-    );
-  }
-}
+      alert("Report Generated");
+      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+      saveAs(pdfBlob, "Feedbacks.pdf");
+    } catch (error) {
+      console.error("Error generating report:", error.message);
+    }
+  };
+
+  return (
+    <div>
+      <Button
+        className="form-group"
+        id="bb"
+        type="submit"
+        style={{ background: "#41AAC8", width: "40%", align: "right" }}
+        startIcon={<InsertDriveFileIcon />}
+        onClick={generateReport}
+      >
+        Generate Report
+      </Button>
+      <br />
+      <br />
+      {feedbacks.map((feedback) => (
+        <div key={feedback.id}>
+          {/* Assuming AdminFeedback component needs to be implemented */}
+          <AdminFeedback
+            studentName={feedback.studentName}
+            rating={feedback.rating}
+            comment={feedback.comment}
+            studentPicture={feedback.studentPicture}
+            date={feedback.date}
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default AdminFeedbacks;

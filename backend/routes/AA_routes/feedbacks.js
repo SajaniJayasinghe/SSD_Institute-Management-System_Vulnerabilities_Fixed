@@ -3,15 +3,20 @@ const Feedback = require("../../models/AA_models/feedback");
 const auth = require("../../middleware/auth");
 const Courses = require("../../models/SS_models/courses");
 const Student = require("../../models/RD_models/student");
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
+const mongoose = require("mongoose");
 
 const router = express.Router();
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
 
 router.post("/add/:courseID", auth, async (req, res) => {
-  let courseID = req.params.courseID;
-  let { rating, comment } = req.body;
-  let date = new Date();
-
   try {
+    const courseID = req.params.courseID;
+    const { rating, comment } = req.body;
+    const date = new Date();
+
     const user = await Student.findOne({ email: req.Stu.email });
     if (!user) {
       throw new Error("There is no student");
@@ -22,53 +27,114 @@ router.post("/add/:courseID", auth, async (req, res) => {
       throw new Error("There is no course");
     }
 
-    let feedback = {
+    const feedback = {
       courseID: courseID,
       studentId: req.Stu._id,
       studentPicture: req.Stu.imageUrl,
       studentName: req.Stu.studentName,
       rating: rating,
-      comment: comment,
-      date: date.toISOString().slice(0, 10),
+      comment: DOMPurify.sanitize(comment), // Sanitize user input to prevent XSS
+      date: date.toISOString().slice(0, 10)
     };
 
     const newFeedback = new Feedback(feedback);
 
-    await newFeedback.save().then(async () => {
-      let feedbackCollection = await Feedback.find({ courseID: courseID });
-      let number = 0;
-      let feedbackCount = feedbackCollection.length;
-      let totalRating = 0;
+    await newFeedback.save();
 
-      if (feedbackCollection.length != 0) {
-        for (number; number < feedbackCollection.length; number++) {
-          totalRating = totalRating + feedbackCollection[number].rating;
-        }
-        let average = totalRating / feedbackCount;
-        let averageRating = Math.round(average * 10) / 10;
-        console.log(averageRating);
-        await Courses.findOneAndUpdate(
-          { _id: courseID },
-          { averageRating: averageRating }
-        );
-      } else {
-        let average = (totalRating + rating) / feedbackCount;
-        let averageRating = Math.round(average * 10) / 10;
-        console.log(averageRating);
-        await Courses.findOneAndUpdate(
-          { _id: courseID },
-          { averageRating: averageRating }
-        );
-      }
-    });
+    const feedbackCollection = await Feedback.find({ courseID: courseID });
+    const totalRating = feedbackCollection.reduce(
+      (acc, feedback) => acc + feedback.rating,
+      0
+    );
+    const feedbackCount = feedbackCollection.length;
+
+    const average = feedbackCount !== 0 ? totalRating / feedbackCount : rating;
+    const averageRating = Math.round(average * 10) / 10;
+
+    await Courses.findOneAndUpdate(
+      { _id: courseID },
+      { averageRating: averageRating }
+    );
+
     res.status(200).send({ status: "Feedback Added", feedbacks: newFeedback });
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .send({ status: "Error with insert Feedback", error: err.message });
-    console.log(err);
   }
 });
+
+// const express = require("express");
+// const Feedback = require("../../models/AA_models/feedback");
+// const auth = require("../../middleware/auth");
+// const Courses = require("../../models/SS_models/courses");
+// const Student = require("../../models/RD_models/student");
+
+// const router = express.Router();
+
+// router.post("/add/:courseID", auth, async (req, res) => {
+//   let courseID = req.params.courseID;
+//   let { rating, comment } = req.body;
+//   let date = new Date();
+
+//   try {
+//     const user = await Student.findOne({ email: req.Stu.email });
+//     if (!user) {
+//       throw new Error("There is no student");
+//     }
+
+//     const course = await Courses.findById(courseID);
+//     if (!course) {
+//       throw new Error("There is no course");
+//     }
+
+//     let feedback = {
+//       courseID: courseID,
+//       studentId: req.Stu._id,
+//       studentPicture: req.Stu.imageUrl,
+//       studentName: req.Stu.studentName,
+//       rating: rating,
+//       comment: comment,
+//       date: date.toISOString().slice(0, 10)
+//     };
+
+//     const newFeedback = new Feedback(feedback);
+
+//     await newFeedback.save().then(async () => {
+//       let feedbackCollection = await Feedback.find({ courseID: courseID });
+//       let number = 0;
+//       let feedbackCount = feedbackCollection.length;
+//       let totalRating = 0;
+
+//       if (feedbackCollection.length != 0) {
+//         for (number; number < feedbackCollection.length; number++) {
+//           totalRating = totalRating + feedbackCollection[number].rating;
+//         }
+//         let average = totalRating / feedbackCount;
+//         let averageRating = Math.round(average * 10) / 10;
+//         await Courses.findOneAndUpdate(
+//           { _id: courseID },
+//           { averageRating: averageRating }
+//         );
+//       } else {
+//         let average = (totalRating + rating) / feedbackCount;
+//         let averageRating = Math.round(average * 10) / 10;
+//         console.log(averageRating);
+//         await Courses.findOneAndUpdate(
+//           { _id: courseID },
+//           { averageRating: averageRating }
+//         );
+//       }
+//     });
+//     res.status(200).send({ status: "Feedback Added", feedbacks: newFeedback });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .send({ status: "Error with insert Feedback", error: err.message });
+//     console.log(err);
+//   }
+// });
 
 // @url           GET /feedback/read/:id
 // @description   display all feedbacks of a course
@@ -136,9 +202,8 @@ router.get("/read/:courseID", async (req, res) => {
       four: four,
       fourAndHalf: fourAndHalf,
       five: five,
-      ratings: feedbacks.length,
+      ratings: feedbacks.length
     };
-    //console.log(ratings);
     res.status(200).send({ feedbacks: feedbacks, ratings: ratings });
   } catch (error) {
     res
@@ -151,6 +216,7 @@ router.get("/read/:courseID", async (req, res) => {
 // @url           PUT /feedback/update/:id
 // @description   update feedback details by id
 // @Action        private
+
 router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
   const courseID = req.params.courseID;
   const feedbackID = req.params.feedbackID;
@@ -167,9 +233,12 @@ router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
       throw new Error("There is no course");
     }
 
+    // Sanitize user inputs using DOMPurify
+    const sanitizedComment = DOMPurify.sanitize(comment);
+
     const updateFeedbck = await Feedback.findOneAndUpdate(
       { _id: feedbackID },
-      { rating: rating, comment: comment }
+      { rating: rating, comment: sanitizedComment }
     ).then(async () => {
       let feedbackCollection = await Feedback.find({ courseID: courseID });
       let number = 0;
@@ -182,7 +251,6 @@ router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
         }
         let average = totalRating / feedbackCount;
         let averageRating = Math.round(average * 10) / 10;
-        console.log(averageRating);
         await Courses.findOneAndUpdate(
           { _id: courseID },
           { averageRating: averageRating }
@@ -190,7 +258,6 @@ router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
       } else {
         let average = (totalRating + rating) / feedbackCount;
         let averageRating = Math.round(average * 10) / 10;
-        console.log(averageRating);
         await Courses.findOneAndUpdate(
           { _id: courseID },
           { averageRating: averageRating }
@@ -207,14 +274,80 @@ router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
   }
 });
 
+// router.put("/update/:courseID/:feedbackID", auth, async (req, res) => {
+//   const courseID = req.params.courseID;
+//   const feedbackID = req.params.feedbackID;
+//   const { rating, comment } = req.body;
+
+//   try {
+//     const user = await Student.findOne({ email: req.Stu.email });
+//     if (!user) {
+//       throw new Error("There is no user");
+//     }
+
+//     const course = await Courses.findById(courseID);
+//     if (!course) {
+//       throw new Error("There is no course");
+//     }
+
+//     const updateFeedbck = await Feedback.findOneAndUpdate(
+//       { _id: feedbackID },
+//       { rating: rating, comment: comment }
+//     ).then(async () => {
+//       let feedbackCollection = await Feedback.find({ courseID: courseID });
+//       let number = 0;
+//       let feedbackCount = feedbackCollection.length;
+//       let totalRating = 0;
+
+//       if (feedbackCollection.length != 0) {
+//         for (number; number < feedbackCollection.length; number++) {
+//           totalRating = totalRating + feedbackCollection[number].rating;
+//         }
+//         let average = totalRating / feedbackCount;
+//         let averageRating = Math.round(average * 10) / 10;
+//         await Courses.findOneAndUpdate(
+//           { _id: courseID },
+//           { averageRating: averageRating }
+//         );
+//       } else {
+//         let average = (totalRating + rating) / feedbackCount;
+//         let averageRating = Math.round(average * 10) / 10;
+//         await Courses.findOneAndUpdate(
+//           { _id: courseID },
+//           { averageRating: averageRating }
+//         );
+//       }
+//     });
+//     res
+//       .status(200)
+//       .send({ status: "Feedback Updated", feedbacks: updateFeedbck });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .send({ status: "Error with update Feedback", error: err.message });
+//   }
+// });
+
 // @url           DELETE /feedback/delete/:courseID/:feedbackID
 // @description   delete feedback details by id
 // @Action        private
-router.delete("/delete/:courseID/:feedbackID", auth, async (req, res) => {
-  const courseID = req.params.courseID;
-  const feedbackID = req.params.feedbackID;
 
+router.delete("/delete/:courseID/:feedbackID", auth, async (req, res) => {
   try {
+    const courseID = req.params.courseID;
+    const feedbackID = req.params.feedbackID;
+
+    // Validate courseID and feedbackID (Check if they are valid MongoDB ObjectIds)
+    if (
+      !mongoose.Types.ObjectId.isValid(courseID) ||
+      !mongoose.Types.ObjectId.isValid(feedbackID)
+    ) {
+      return res.status(400).send({
+        status: "Bad Request",
+        error: "Invalid courseID or feedbackID"
+      });
+    }
+
     const user = await Student.findOne({ email: req.Stu.email });
     if (!user) {
       throw new Error("There is no student");
@@ -230,44 +363,95 @@ router.delete("/delete/:courseID/:feedbackID", auth, async (req, res) => {
       throw new Error("There is no feedback");
     }
 
-    const deleteFeedback = await Feedback.findByIdAndDelete(feedbackID).then(
-      async () => {
-        let feedbackCollection = await Feedback.find({ courseID: courseID });
-        let number = 0;
-        let feedbackCount = feedbackCollection.length;
-        let totalRating = 0;
+    // Delete the feedback
+    const deleteFeedback = await Feedback.findByIdAndDelete(feedbackID);
 
-        if (feedbackCollection.length != 0) {
-          for (number; number < feedbackCollection.length; number++) {
-            totalRating = totalRating + feedbackCollection[number].rating;
-          }
-          let average = totalRating / feedbackCount;
-          let averageRating = Math.round(average * 10) / 10;
-          console.log(averageRating);
-          await Courses.findOneAndUpdate(
-            { _id: courseID },
-            { averageRating: averageRating }
-          );
-        } else {
-          let average = (totalRating + rating) / feedbackCount;
-          let averageRating = Math.round(average * 10) / 10;
-          console.log(averageRating);
-          await Courses.findOneAndUpdate(
-            { _id: courseID },
-            { averageRating: averageRating }
-          );
-        }
-      }
+    // Recalculate average rating
+    const feedbackCollection = await Feedback.find({ courseID: courseID });
+    const feedbackCount = feedbackCollection.length;
+    const totalRating = feedbackCollection.reduce(
+      (total, fb) => total + fb.rating,
+      0
     );
+
+    const averageRating =
+      feedbackCount > 0
+        ? Math.round((totalRating / feedbackCount) * 10) / 10
+        : 0;
+
+    // Update the average rating in the course
+    await Courses.findOneAndUpdate(
+      { _id: courseID },
+      { averageRating: averageRating }
+    );
+
     res
       .status(200)
       .send({ status: "Feedback Deleted", feedbacks: deleteFeedback });
   } catch (err) {
+    console.error(err);
     res
       .status(500)
       .send({ status: "Error with delete Feedback", error: err.message });
-    console.log(err);
   }
 });
+
+// router.delete("/delete/:courseID/:feedbackID", auth, async (req, res) => {
+//   const courseID = req.params.courseID;
+//   const feedbackID = req.params.feedbackID;
+
+//   try {
+//     const user = await Student.findOne({ email: req.Stu.email });
+//     if (!user) {
+//       throw new Error("There is no student");
+//     }
+
+//     const course = await Courses.findById(courseID);
+//     if (!course) {
+//       throw new Error("There is no course");
+//     }
+
+//     const feedback = await Feedback.findById(feedbackID);
+//     if (!feedback) {
+//       throw new Error("There is no feedback");
+//     }
+
+//     const deleteFeedback = await Feedback.findByIdAndDelete(feedbackID).then(
+//       async () => {
+//         let feedbackCollection = await Feedback.find({ courseID: courseID });
+//         let number = 0;
+//         let feedbackCount = feedbackCollection.length;
+//         let totalRating = 0;
+
+//         if (feedbackCollection.length != 0) {
+//           for (number; number < feedbackCollection.length; number++) {
+//             totalRating = totalRating + feedbackCollection[number].rating;
+//           }
+//           let average = totalRating / feedbackCount;
+//           let averageRating = Math.round(average * 10) / 10;
+//           await Courses.findOneAndUpdate(
+//             { _id: courseID },
+//             { averageRating: averageRating }
+//           );
+//         } else {
+//           let average = (totalRating + rating) / feedbackCount;
+//           let averageRating = Math.round(average * 10) / 10;
+//           await Courses.findOneAndUpdate(
+//             { _id: courseID },
+//             { averageRating: averageRating }
+//           );
+//         }
+//       }
+//     );
+//     res
+//       .status(200)
+//       .send({ status: "Feedback Deleted", feedbacks: deleteFeedback });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .send({ status: "Error with delete Feedback", error: err.message });
+//     console.log(err);
+//   }
+// });
 
 module.exports = router;

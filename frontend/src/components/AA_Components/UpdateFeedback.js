@@ -4,6 +4,7 @@ import { Modal } from "react-bootstrap";
 import StarRating from "stars-rating";
 import CommentIcon from "@material-ui/icons/Comment";
 import Button from "@material-ui/core/Button";
+import DOMPurify from "dompurify";
 
 const UpdateFeedback = ({
   comment,
@@ -11,28 +12,41 @@ const UpdateFeedback = ({
   feedbackID,
   courseID,
   show,
-  onHide,
+  onHide
 }) => {
   const [newRating, setNewRating] = useState(rating);
   const [newComment, setNewComment] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
 
   const updateRating = (r) => {
     setNewRating(r);
   };
 
+  const sanitizeInput = (input) => {
+    return DOMPurify.sanitize(input);
+  };
+
   const updateFeedback = async (e) => {
     e.preventDefault();
+    const sanitizedComment = sanitizeInput(newComment);
+
+    if (sanitizedComment !== newComment) {
+      setAlertMessage("Please enter a valid comment.");
+      return;
+    }
+
     const updatedFeedback = {
       rating: newRating,
-      comment: newComment,
+      comment: sanitizedComment
     };
 
     const config = {
       headers: {
         Authorization: localStorage.getItem("Authorization"),
-        "content-type": "application/json",
-      },
+        "content-type": "application/json"
+      }
     };
+
     await axios
       .put(
         `http://localhost:8070/feedbacks/update/${courseID}/${feedbackID}`,
@@ -78,7 +92,7 @@ const UpdateFeedback = ({
             />
             <br />
             <label className="text-color">Change Your Comment</label>
-            <textArea
+            <textarea
               rows={5}
               className="form-control"
               variant="outlined"
@@ -88,28 +102,18 @@ const UpdateFeedback = ({
               required
             >
               {comment}
-            </textArea>
+            </textarea>
             <br />
-
-            {/* <Button
-                variant="contained"
-                className="w-10"
-                style={{
-                  background: "rgb(139, 192, 255)",
-                  width: 50 + "%",
-                  borderRadius: "20px",
-                }}
-                startIcon={<CommentIcon />}
-                disableElevation
-                type="submit"
-                onClick={updateFeedback}
-              >
-                Update
-              </Button> */}
+            {alertMessage && (
+              <div className="alert alert-danger">{alertMessage}</div>
+            )}
             <Button
               variant="contained"
               className="w-10"
-              style={{ background: "rgb(139, 192, 255)", width: 100 + "%" }}
+              style={{
+                background: "rgb(139, 192, 255)",
+                width: 100 + "%"
+              }}
               startIcon={<CommentIcon />}
               disableElevation
               type="submit"
