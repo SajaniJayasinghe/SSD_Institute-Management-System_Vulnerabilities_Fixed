@@ -5,6 +5,8 @@ const bcrypt = require("bcryptjs");
 
 const studentSchema = new mongoose.Schema({
 
+    googleId: { type: String },
+
     studentName :{
         type : String,
         required: [true, "Student Name is required!"],
@@ -70,7 +72,7 @@ studentSchema.pre('save', async function(next){
   });
 
   // @Action - Get auth token
-  studentSchema.methods.generateAuthToken = async function () {
+studentSchema.methods.generateAuthToken = async function () {
     const student = this;
     const token = jwt.sign({ _id: student._id }, "jwtSecret");
     student.tokens = student.tokens.concat({ token });
@@ -78,7 +80,7 @@ studentSchema.pre('save', async function(next){
     return token;
 };
 
-// @Action - Find customer by credentials
+// @Action - Find student by credentials
 studentSchema.statics.findByCredentials = async (email, pwd) => {
     const student1 = await student.findOne({ email });
     if (!student1) {

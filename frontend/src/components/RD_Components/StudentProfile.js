@@ -1,11 +1,10 @@
-
 // import React, { useState, useEffect } from "react";
 // import axios from "axios";
 // import UpdateProfile from "./StudentUpdateProfile";
 // import CircularProgress from "@material-ui/core/CircularProgress";
 // import NavBar from "../Layouts/Navbar";
 // import Footer from "../Layouts/footer";
-
+ 
 // const StudentProfile = () => {
 //   const [studentName, setstudentName] = useState("");
 //   const [email, setemail] = useState("");
