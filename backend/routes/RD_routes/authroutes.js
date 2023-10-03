@@ -23,5 +23,4 @@ AuthRouter.get("/logout", (req, res) => {
   res.clearCookie("institute");
   res.redirect("http://localhost:1234/");
 });
-
 module.exports = AuthRouter;
