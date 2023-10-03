@@ -1,146 +1,97 @@
-const express = require("express");
-const router = require("express").Router();
-let student = require("../../models/RD_models/student");
-const validator= require("validator");
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken');
-const auth = require("../../middleware/auth");
+const mongoose = require ('mongoose');
+const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-//student signup
-router.post("/signup",async (req, res) => {
-    try {
-      const {
-        studentName,
-        email,
-        pwd,
-        NIC,
-        phone
+const studentSchema = new mongoose.Schema({
 
-      } = req.body;
+    googleId: { type: String },
 
-      let student1 = await student.findOne({ email });
-      if (student1) {
-        throw new Error("student already exists");
-      }
+    studentName :{
+        type : String,
+        required: [true, "Student Name is required!"],
+        maxlength: [50, "Student Name should be less than 50 characters!"],
+        trim: true,
+      },
+  
+      email: {
+        type: String,
+        trim: true,
+        maxlength: [100, "Email should be less than 100 characters!"],
+        validate: {
+          validator: (value) => {
+            return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+              value
+            );
+          },
+          message: "Invalid email address!",
+        },
+    },
 
-      student1 = {
-        studentName : studentName,
-        email: email,
-        pwd: pwd,
-        NIC: NIC,
-        phone : phone
+      pwd: {
+      type: String,
+      trim: true,
+      minlength: [6, "Password should be more than 6 characters!"],
+  },
+
+  NIC: {
+    type: String,
+    trim: true,
+    minlength: [6, "NIC should be more than 6 characters!"],
+  },
+
+  phone: {
+        type: String,
+        trim: true,
+        maxlength: [10, "Phone Number should be less than 10 characters!"],
+        validate: {
+          validator: (value) => {
+            return /^[0-9]{10}$/.test(value);
+          },
+          message: "Invalid phone number!",
+        },
+      },
+      
+  tokens: [
+        {
+        token: {
+            type: String,
+            required: true,
+        },
+        },
+    ],   
+},  {timestamps:true});
+
+// @Action - encrypt the password
+studentSchema.pre('save', async function(next){
+    if(!this.isModified("pwd")){
+        next();
+    }
+    const salt = await bcrypt.genSalt(8);
+    this.pwd = await bcrypt.hash(this.pwd, salt);
+  });
+
+  // @Action - Get auth token
+studentSchema.methods.generateAuthToken = async function () {
+    const student = this;
+    const token = jwt.sign({ _id: student._id }, "jwtSecret");
+    student.tokens = student.tokens.concat({ token });
+    await student.save();
+    return token;
 };
-    
-      const newstudent = new student(student1);
-      await newstudent.save();
-      const token = await newstudent.generateAuthToken()
-      res.status(201).send({ status: "student Member Created", student: newstudent, token: token });
-     
-      console.log(student1);
-    
-      } catch (error) {
-         console.log(error.message);
-         res.status(500).send({error: error.message});
-        //  console.log(error)
+
+// @Action - Find student by credentials
+studentSchema.statics.findByCredentials = async (email, pwd) => {
+    const student1 = await student.findOne({ email });
+    if (!student1) {
+      throw new Error("Please enter authorized student Email");
     }
-  });
-
-   //student login
-   router.post('/signin', async (req, res) => {
-    try {
-      const {email, pwd} = req.body
-      const Stu = await student.findByCredentials(email, pwd)
-      const token = await Stu.generateAuthToken()
-      res.status(200).send({token: token, Stu: Stu})
-  
-    } catch (error) {
-      res.status(500).send({ error: error.message });
-      console.log(error);
+    const isMatch = await bcrypt.compare(pwd, student1.pwd);
+    if (!isMatch) {
+      throw new Error("Password is not matched");
     }
-  });
+    return student1;
+    };
 
-
-//get student profile
-router.get("/profile", auth, async (req, res) => {
-    try {
-      res.status(201)
-      res.send({ success: "Student Logged In", Stu: req.Stu });
-    } 
-      catch (error) {
-      res.status(500)
-      res.send({ status: "Error with profile", error: error.message });
-    }
-  });
-
-  
-  // Logout profile
-  router.post("/logout", auth, async (req, res) => {
-  try {
-    req.Stu.tokens = req.Stu.tokens.filter((token) => {
-      return token.token !== req.token;
-    });
-    await req.Stu.save();
-    res.status(200).send("Logout successfully");
-  } catch (error) {
-    console.error("Logout error:", error);
-    if (error instanceof OperationalError) {
-      return res.status(400).send(error.message);
-    }
-    // Handle unexpected errors 
-    return res.status(500).send("Internal Server Error");
-  }
-});
-
-// update student profile
-router.put('/update', auth, async (req, res) => {
-    try {
-      const {
-          studentName,
-          email,
-          phone,
-          NIC,
-          
-        } = req.body;
-  
-      let Stu = await student.findOne({email})
-        
-      if (!Stu) {
-          throw new Error('There is no student account')
-        }
-  
-        const studentUpdate = await student.findByIdAndUpdate(req.Stu.id, 
-          {
-            studentName:studentName,
-            email:email,
-            phone:phone,
-            NIC: NIC
-            
-          })
-  
-          res.status(200).send({status: 'Student Profile Updated', Stu: studentUpdate})
-  
-        } catch (error) {
-          res.status(500).send({error: error.message})
-          console.log(error)
-        }
-      });
-  
-      //delete student account
-    router.delete("/delete", auth, async (req, res) => {
-        try {
-          const Stu = await student.findById(req.Stu.id);
-          if (!Stu) {
-            throw new Error("There is no student to delete");
-          }
-          const deleteProfile = await student.findByIdAndDelete(req.Stu.id);
-          res.status(200).send({ status: "Student deleted", Stu: deleteProfile });
-        } catch (error) {
-          res
-            .status(500)
-            .send({ status: "error with /delete/:id", error: error.message });
-        }
-      });
-
-
-  module.exports = router;
-
+ const student = mongoose.model("student", studentSchema);
+ module.exports = student; 

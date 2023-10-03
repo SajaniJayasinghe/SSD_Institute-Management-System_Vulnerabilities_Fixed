@@ -12,10 +12,52 @@ const passport = require("passport");
 require("./utils/auth.config");
 
 
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 3, // Maximum 3 requests per minute from the same IP
+  message: "Too many requests from this IP, please try again later.",
+});
+
+// Apply rate limiter to all routes or specific routes as needed
+app.use(limiter);
+
+
 //app middleware
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
+
+
+//Sanitize data
+
+app.use(
+  mongoSanitize({
+    replaceWith: "_",
+
+    allowDots: true,
+  })
+);
+
+//Prevent XSS attacks
+
+app.use(xss());
+
+// Use Helmet!
+
+app.use(helmet());
+
+const corsOptions = {
+  origin: "http://localhost:1234",
+
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 
 const PORT = process.env.PORT || 8070;
@@ -66,7 +108,7 @@ const AuthRouter = require("./routes/RD_routes/authroutes");
 app.use("/course", courseRouter);
 app.use("/student", studentRouter);
 app.use("/admin", adminRouter);
-app.use("/usersremove",usersremoveRoutes);
+app.use("/usersremove", usersremoveRoutes);
 app.use("/feedbacks", feedbackRouter);
 app.use("/admin", chartroutes);
 app.use("/blog", postRouter);

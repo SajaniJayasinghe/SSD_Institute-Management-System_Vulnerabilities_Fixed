@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Course from "./Userside-Coursespage";
 import Paginat from "./paginationComponent";
-import UserNavBar from "../Layouts/UserNavbar";
+import UserNavBar from "../Layouts/UserNavBar";
 import Footer from "../Layouts/footer";
 
 const Courses = () => {

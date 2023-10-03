@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Course from "./CoursesPage";
 import Paginat from "./paginationComponent";
-import NavBar from "../Layouts/Navbar";
+import NavBar from "../Layouts/NavBar";
 import Footer from "../Layouts/footer";
 
 const CoursesDisplay = () => {
