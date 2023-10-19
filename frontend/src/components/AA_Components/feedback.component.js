@@ -10,6 +10,7 @@ import IconButton from "@material-ui/core/IconButton";
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import UpdateFeedback from "./UpdateFeedback";
+import jwt_decode from "jwt-decode";
 
 // @ material ui styles
 const useStyles = makeStyles((theme) => ({
@@ -54,6 +55,17 @@ const Feedback = ({
   const [open, setOpen] = useState(false);
   const [onHide, setOnHide] = useState(true);
   const forceUpdate = useForceUpdate();
+  let verify = null;
+  if (token) {
+    verify = jwt_decode(token);
+    console.log("key id", verify._id);
+    console.log("token", token);
+    console.log("student id", studentId);
+    console.log("student name", studentName);
+    console.log(studentId === verify._id);
+  } else {
+    verify = null;
+  }
 
   const updateComment = () => {
     setOpen(true);
@@ -129,24 +141,29 @@ const Feedback = ({
 
         <div style={{ fontSize: 15 }}>
           <div style={{ paddingLeft: 105, display: "flex" }}>{comment}</div>
-          <div className="d-flex justify-content-end">
-            <div style={{ paddingTop: 8 }}>
-              <IconButton
-                aria-label="delete"
-                color="inherit"
-                onClick={deleteComment}
-              >
-                <DeleteIcon className={deleteButton.root} fontSize="small" />
-              </IconButton>
-              <IconButton
-                aria-label="update"
-                color="inherit"
-                onClick={updateComment}
-              >
-                <UpdateIcon className={update.root} fontSize="small" />
-              </IconButton>
+
+          {verify === null || studentId !== verify._id ? (
+            <div></div>
+          ) : (
+            <div className="d-flex justify-content-end">
+              <div style={{ paddingTop: 8 }}>
+                <IconButton
+                  aria-label="delete"
+                  color="inherit"
+                  onClick={deleteComment}
+                >
+                  <DeleteIcon className={deleteButton.root} fontSize="small" />
+                </IconButton>
+                <IconButton
+                  aria-label="update"
+                  color="inherit"
+                  onClick={updateComment}
+                >
+                  <UpdateIcon className={update.root} fontSize="small" />
+                </IconButton>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Paper>
 

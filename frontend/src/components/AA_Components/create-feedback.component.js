@@ -65,7 +65,20 @@ const CreateFeedback = (courseID) => {
         window.location.reload();
       })
       .catch((error) => {
-        alert("Please Register To the Application");
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error("Server error:", error.response.data);
+          alert("An error occurred while processing your request.");
+        } else if (error.request) {
+          // The request was made but no response was received
+          console.error("Request error:", error.request);
+          alert("No response received from the server.");
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          console.error("General error:", error.message);
+          alert("An unexpected error occurred.");
+        }
       });
   };
 
