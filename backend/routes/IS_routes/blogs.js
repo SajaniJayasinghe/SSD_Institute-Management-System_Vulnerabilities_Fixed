@@ -2,12 +2,18 @@ const express = require("express");
 const Blog = require("../../models/IS_models/blog");
 const auth = require("../../middleware/auth");
 const Student = require("../../models/RD_models/student");
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
 
 const router = express.Router();
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
+
+//Add the mongoSanitize middleware to sanitize input data
 
 router.post("/addblogs", auth, async (req, res) => {
   let { title, description, photo } = req.body;
-  let date = new Date();
+  console.log(req.body);
 
   try {
     const user = await Student.findOne({ email: req.Stu.email });
@@ -15,14 +21,17 @@ router.post("/addblogs", auth, async (req, res) => {
       throw new Error("There is no student");
     }
 
+    // Sanitize user inputs using DOMPurify
+    const sanitizedTitle = DOMPurify.sanitize(title);
+    const sanitizedDescription = DOMPurify.sanitize(description);
+    const sanitizedPhoto = DOMPurify.sanitize(photo);
+
     let blog = {
       studentId: req.Stu._id,
-      // studentPicture: req.Stu.imageUrl,
       studentName: req.Stu.studentName,
-      title: title,
-      description: description,
-      photo: photo,
-      // date: date.toISOString().slice(0, 10),
+      title: sanitizedTitle,
+      description: sanitizedDescription,
+      photo: sanitizedPhoto,
     };
 
     const newBlog = new Blog(blog);
@@ -33,7 +42,7 @@ router.post("/addblogs", auth, async (req, res) => {
     res
       .status(500)
       .send({ status: "Error with insert Blog", error: err.message });
-    console.log(err);
+    console.error(err);
   }
 });
 
@@ -73,6 +82,14 @@ router.get("/:blogID", async (req, res) => {
 // // @url           PUT /blog/update/:id
 // // @description   update blog details by id
 // // @Action        private
+
+// Configure DOMPurify to be stricter and prevent any script execution
+DOMPurify.setConfig({
+  ADD_ATTR: ["target"],
+  FORBID_TAGS: ["script"],
+  FORBID_ATTR: ["onerror"],
+});
+
 router.put("/update/:blogID", auth, async (req, res) => {
   const blogID = req.params.blogID;
   const { title, description } = req.body;
@@ -83,10 +100,20 @@ router.put("/update/:blogID", auth, async (req, res) => {
       throw new Error("There is no user");
     }
 
+    // Sanitize user inputs using DOMPurify
+    const sanitizedTitle = DOMPurify.sanitize(title);
+    const sanitizedDescription = DOMPurify.sanitize(description);
+
     const updateBlog = await Blog.findOneAndUpdate(
       { _id: blogID },
-      { title: title, description: description }
+      { title: sanitizedTitle, description: sanitizedDescription },
+      { new: true } // Return the updated document
     );
+
+    if (!updateBlog) {
+      return res.status(404).send({ status: "Blog not found" });
+    }
+
     res.status(200).send({ status: "Blog Updated", blogs: updateBlog });
   } catch (err) {
     res

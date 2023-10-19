@@ -23,16 +23,22 @@ export default class CourseDetails extends Component {
   componentDidMount() {
     this.retrieveCourses();
   }
+  //Prevent Secure Dependencies
+  async retrieveCourses() {
+    try {
+      const response = await axios.get(
+        "http://localhost:8070/course/getDetails"
+      );
 
-  retrieveCourses() {
-    axios.get("http://localhost:8070/course/getDetails").then((res) => {
-      if (res.data.success) {
+      if (response.data.success) {
         this.setState({
-          courses: res.data.existingCourses,
+          courses: response.data.existingCourses,
         });
         console.log(this.state.courses);
       }
-    });
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+    }
   }
 
   // delete course details
@@ -55,22 +61,31 @@ export default class CourseDetails extends Component {
   // Generate report
   async generateReport() {
     const obj = { courses: this.state.courses };
-    await axios
-      .post("http://localhost:8070/generatecoursereport", obj, {
-        responseType: "arraybuffer",
-        headers: { Accept: "application/pdf" },
-      })
-      .then((res) => {
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8070/generatecoursereport",
+        obj,
+        {
+          responseType: "arraybuffer",
+          headers: { Accept: "application/pdf" },
+        }
+      );
+
+      const contentType = response.headers["content-type"];
+
+      if (contentType === "application/pdf") {
+        const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+        saveAs(pdfBlob, "Courses.pdf");
         alert("Report Generated");
-        console.log(res);
-        console.log(res.data);
-        const pdfBlog = new Blob([res.data], { type: "application/pdf" });
-        saveAs(pdfBlog, "Courses.pdf");
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
-    console.log(obj);
+      } else {
+        console.log("Invalid content type:", contentType);
+        alert("Failed to generate the course report. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating the course report:", error.message);
+      alert("An error occurred while generating the course report.");
+    }
   }
 
   render() {
